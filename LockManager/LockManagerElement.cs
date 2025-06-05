@@ -20,7 +20,7 @@
 	public class LockManagerElement : ILockManagerElement
 	{
 		private static readonly int InterAppReceive_ParameterId = 9000000;
-		private static readonly int InterApp_Timeout_ParameterId = 100;
+		private static readonly int InterAppTimeout_ParameterId = 100;
 
 		private readonly IConnection connection;
 		private readonly IDmsElement element;
@@ -42,7 +42,7 @@
 		{
 			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			this.logger = logger;
-			timeout = new Lazy<TimeSpan>(GetTimeout);
+			this.timeout = new Lazy<TimeSpan>(GetTimeout);
 
 			element = connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId));
 
@@ -51,7 +51,10 @@
 
 		private TimeSpan Timeout => timeout.Value;
 
-		public static IEnumerable<Type> KnownTypes { get; } = new List<Type>
+		/// <summary>
+		/// A collection containing all classes used in InterApp communication.
+		/// </summary>
+		public static IReadOnlyCollection<Type> InterAppKnownTypes { get; } = new List<Type>
 		{
 			typeof(IInterAppCall),
 			typeof(LockObjectsRequestsMessage),
@@ -90,9 +93,9 @@
 
 			Log($"Requesting locks for {string.Join(", ", requests)}");
 
-			SendMessage(lockObjectsRequestsMessage, requiresResponse: true, out LockObjectsResponsesMessage result);
+			SendMessage(lockObjectsRequestsMessage, requiresResponse: true, out LockObjectsResponsesMessage responseMessage);
 
-			return result.Responses.Select(x => new LockInfo
+			return responseMessage.Responses.Select(x => new LockInfo
 			{
 				LockHolderInfo = x.LockHolderInfo,
 				IsGranted = x.LockIsGranted,
@@ -127,7 +130,7 @@
 				Requests = requests,
 			};
 
-			SendMessage(message, requiresResponse: false, out UnlockObjectsResponsesMessage result);
+			SendMessage(message, requiresResponse: false, out UnlockObjectsResponsesMessage responseMessage);
 
 			Log($"Releasing locks for {string.Join(", ", requests)}");
 		}
@@ -143,7 +146,7 @@
 
 			if (requiresResponse)
 			{
-				var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, KnownTypes).First();
+				var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, InterAppKnownTypes).First();
 
 				Log($"Response: {JsonConvert.SerializeObject(response)}");
 
@@ -151,9 +154,9 @@
 				{
 					throw new InvalidOperationException(failureResponse.Message);
 				}
-				else if (response is T castResponse)
+				else if (response is T expectedResponse)
 				{
-					responseMessage = castResponse;
+					responseMessage = expectedResponse;
 				}
 				else
 				{
@@ -162,7 +165,7 @@
 			}
 			else
 			{
-				commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, KnownTypes);
+				commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, InterAppKnownTypes);
 			}
 		}
 
@@ -170,7 +173,7 @@
 		{
 			try
 			{
-				var timeoutInSeconds = element.GetStandaloneParameter<double?>(InterApp_Timeout_ParameterId) ?? throw new NullReferenceException("InterApp Timeout value is null.");
+				var timeoutInSeconds = element.GetStandaloneParameter<double?>(InterAppTimeout_ParameterId) ?? throw new NullReferenceException("InterApp Timeout value is null.");
 				var retrievedTimeout = TimeSpan.FromSeconds(timeoutInSeconds.GetValue().Value);
 
 				Log($"Timeout: {timeout}");

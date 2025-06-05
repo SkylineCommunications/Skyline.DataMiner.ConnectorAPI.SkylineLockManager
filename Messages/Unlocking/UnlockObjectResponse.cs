@@ -1,5 +1,8 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking
 {
+	/// <summary>
+	/// Represent the response to <see cref="UnlockObjectRequest"/>.
+	/// </summary>
 	public class UnlockObjectResponse
 	{
 		/// <summary>

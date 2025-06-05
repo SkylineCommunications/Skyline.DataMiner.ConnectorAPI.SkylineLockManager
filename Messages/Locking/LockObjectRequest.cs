@@ -4,7 +4,7 @@
 	using System.Collections.Generic;
 
 	/// <summary>
-	/// Represents a single object to be locked.
+	/// Represents a request to lock a single object.
 	/// </summary>
 	public class LockObjectRequest
 	{
@@ -18,6 +18,9 @@
 		/// </summary>
 		public string ObjectDescription { get; set; }
 
+		/// <summary>
+		/// Gets or sets information about the requester of the lock.
+		/// </summary>
 		public string LockRequesterInfo { get; set; }
 
 		/// <summary>
@@ -25,6 +28,9 @@
 		/// </summary>
 		public List<LockObjectRequest> LinkedObjectRequests { get; set; } = new List<LockObjectRequest>();
 
+		/// <summary>
+		/// Gets or sets the timestamp at which the element can automatically release the lock. If set to null, the default value defined in the element will be used.
+		/// </summary>
 		public DateTime? AutoUnlockTimestamp { get; set; }
 	}
 }

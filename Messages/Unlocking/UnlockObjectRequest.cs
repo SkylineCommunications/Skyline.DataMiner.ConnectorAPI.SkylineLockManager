@@ -1,7 +1,7 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking
 {
 	/// <summary>
-	/// 
+	/// Represents a request to unlock an individual object.
 	/// </summary>
 	public class UnlockObjectRequest
 	{

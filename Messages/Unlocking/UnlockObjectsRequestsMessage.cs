@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
-
-namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking
+﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking
 {
+	using System.Collections.Generic;
+	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
+
 	/// <summary>
 	/// InterApp message that is sent to the Lock Manager element when releasing a lock.
 	/// </summary>
