@@ -58,17 +58,20 @@
 			typeof(LockObjectsRequestsMessage),
 			typeof(LockObjectsResponsesMessage),
 			typeof(UnlockObjectsRequestsMessage),
-			typeof(UnlockObjectsResponsesMessage),
 			typeof(FailureMessage),
 		};
 
 		/// <inheritdoc cref="ILockManagerElement.LockObject(LockObjectRequest)"/>
+		/// <exception cref="ArgumentNullException"/>
+		/// <exception cref="InvalidOperationException"/>
 		public ILockInfo LockObject(LockObjectRequest request)
 		{
 			return LockObjects(new[] { request }).Single();
 		}
 
 		/// <inheritdoc cref="ILockManagerElement.LockObjects(IEnumerable{LockObjectRequest})"/>
+		/// <exception cref="ArgumentNullException"/>
+		/// <exception cref="InvalidOperationException"/>
 		public IEnumerable<ILockInfo> LockObjects(IEnumerable<LockObjectRequest> requests)
 		{
 			if (requests is null) throw new ArgumentNullException(nameof(requests));
@@ -81,7 +84,7 @@
 
 			Log($"Requesting locks for {string.Join(", ", requests)}");
 
-			SendMessage(lockObjectsRequestsMessage, requiresResponse: true, out LockObjectsResponsesMessage responseMessage);
+			SendMessageWithResponse(lockObjectsRequestsMessage, out LockObjectsResponsesMessage responseMessage);
 
 			return responseMessage.Responses.Select(x => new LockInfo
 			{
@@ -93,30 +96,38 @@
 		}
 
 		/// <inheritdoc cref="ILockManagerElement.UnlockObject(UnlockObjectRequest)"/>
-		public IUnlockInfo UnlockObject(UnlockObjectRequest request)
+		/// <exception cref="ArgumentNullException"/>
+		public void UnlockObject(UnlockObjectRequest request)
 		{
-			return UnlockObjects(new[] { request }).Single();
+			UnlockObjects(new[] { request });
 		}
 
 		/// <inheritdoc cref="ILockManagerElement.UnlockObjects(IEnumerable{UnlockObjectRequest})"/>
-		public IEnumerable<IUnlockInfo> UnlockObjects(IEnumerable<UnlockObjectRequest> requests)
+		/// <exception cref="ArgumentNullException"/>
+		public void UnlockObjects(IEnumerable<UnlockObjectRequest> requests)
 		{
 			if (requests is null) throw new ArgumentNullException(nameof(requests));
-			if (!requests.Any()) return Enumerable.Empty<IUnlockInfo>();
+			if (!requests.Any()) return;
 
 			var message = new UnlockObjectsRequestsMessage
 			{
 				Requests = requests,
 			};
 
-			SendMessage(message, requiresResponse: false, out UnlockObjectsResponsesMessage responseMessage);
+			SendMessageWithoutResponse(message);
 
 			Log($"Releasing locks for {string.Join(", ", requests)}");
-
-			return responseMessage.Responses;
 		}
 
-		private void SendMessage<T>(Message message, bool requiresResponse, out T responseMessage) where T : Message
+		private void SendMessageWithoutResponse(Message message)
+		{
+			var commands = InterAppCallFactory.CreateNew();
+			commands.Messages.Add(message);
+
+			commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, InterAppKnownTypes);
+		}
+
+		private void SendMessageWithResponse<T>(Message message, out T responseMessage) where T : Message
 		{
 			responseMessage = default;
 
@@ -125,29 +136,22 @@
 
 			Log($"Message: {JsonConvert.SerializeObject(message)}");
 
-			if (requiresResponse)
+			var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, InterAppKnownTypes).First();
+
+			Log($"Response: {JsonConvert.SerializeObject(response)}");
+
+			if (response is FailureMessage failureResponse)
 			{
-				var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, InterAppKnownTypes).First();
-
-				Log($"Response: {JsonConvert.SerializeObject(response)}");
-
-				if (response is FailureMessage failureResponse)
-				{
-					throw new InvalidOperationException(failureResponse.Message);
-				}
-				else if (response is T expectedResponse)
-				{
-					responseMessage = expectedResponse;
-				}
-				else
-				{
-					throw new InvalidOperationException($"Received response is not of type {typeof(T)}");
-				}
+				throw new InvalidOperationException(failureResponse.Message);
+			}
+			else if (response is T expectedResponse)
+			{
+				responseMessage = expectedResponse;
 			}
 			else
 			{
-				commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, InterAppKnownTypes);
-			}
+				throw new InvalidOperationException($"Received response is not of type {typeof(T)}");
+			}	
 		}
 
 		private TimeSpan GetTimeout()
