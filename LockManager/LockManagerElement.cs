@@ -14,9 +14,7 @@
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
 	using Skyline.DataMiner.Net;
 
-	/// <summary>
-	/// Represents a Skyline Lock Manager element in DataMiner and exposes methods to lock and unlock objects.
-	/// </summary>
+	/// <inheritdoc cref="ILockManagerElement"/>
 	public class LockManagerElement : ILockManagerElement
 	{
 		private static readonly int InterAppReceive_ParameterId = 9000000;
@@ -64,23 +62,13 @@
 			typeof(FailureMessage),
 		};
 
-		/// <summary>
-		/// Locks object of a specific type.
-		/// </summary>
-		/// <param name="request">ID of the object to be locked.</param>
-		/// <returns>LockInfo object containing information on the requested lock.</returns>
-		/// <exception cref="InvalidOperationException">If something went wrong during InterApp communication.</exception>
+		/// <inheritdoc cref="ILockManagerElement.LockObject(LockObjectRequest)"/>
 		public ILockInfo LockObject(LockObjectRequest request)
 		{
 			return LockObjects(new[] { request }).Single();
 		}
 
-		/// <summary>
-		/// Locks objects of a specific type.
-		/// </summary>
-		/// <param name="requests">IDs of the objects to be locked.</param>
-		/// <returns>LockInfo object containing information on the requested lock.</returns>
-		/// <exception cref="InvalidOperationException">If something went wrong during InterApp communication.</exception>
+		/// <inheritdoc cref="ILockManagerElement.LockObjects(IEnumerable{LockObjectRequest})"/>
 		public IEnumerable<ILockInfo> LockObjects(IEnumerable<LockObjectRequest> requests)
 		{
 			if (requests is null) throw new ArgumentNullException(nameof(requests));
@@ -104,26 +92,17 @@
 			}).ToList();
 		}
 
-		/// <summary>
-		/// Unlocks an object.
-		/// </summary>
-		/// <param name="request">Info about the object to be unlocked.</param>
-		/// <returns>LockInfo object containing information on the requested lock.</returns>
-		public void UnlockObject(UnlockObjectRequest request)
+		/// <inheritdoc cref="ILockManagerElement.UnlockObject(UnlockObjectRequest)"/>
+		public IUnlockInfo UnlockObject(UnlockObjectRequest request)
 		{
-			UnlockObjects(new[] { request });
+			return UnlockObjects(new[] { request }).Single();
 		}
 
-		/// <summary>
-		/// Unlocks objects of a specific type.
-		/// </summary>
-		/// <param name="requests">Object IDs to unlock per object type.</param>
-		/// <returns>True if lock was released correctly, else false.</returns>
-		/// <exception cref="InvalidOperationException">If something went wrong during InterApp communication.</exception>
-		public void UnlockObjects(IEnumerable<UnlockObjectRequest> requests)
+		/// <inheritdoc cref="ILockManagerElement.UnlockObjects(IEnumerable{UnlockObjectRequest})"/>
+		public IEnumerable<IUnlockInfo> UnlockObjects(IEnumerable<UnlockObjectRequest> requests)
 		{
 			if (requests is null) throw new ArgumentNullException(nameof(requests));
-			if (!requests.Any()) return;
+			if (!requests.Any()) return Enumerable.Empty<IUnlockInfo>();
 
 			var message = new UnlockObjectsRequestsMessage
 			{
@@ -133,6 +112,8 @@
 			SendMessage(message, requiresResponse: false, out UnlockObjectsResponsesMessage responseMessage);
 
 			Log($"Releasing locks for {string.Join(", ", requests)}");
+
+			return responseMessage.Responses;
 		}
 
 		private void SendMessage<T>(Message message, bool requiresResponse, out T responseMessage) where T : Message
@@ -173,7 +154,8 @@
 		{
 			try
 			{
-				var timeoutInSeconds = element.GetStandaloneParameter<double?>(InterAppTimeout_ParameterId) ?? throw new NullReferenceException("InterApp Timeout value is null.");
+				var timeoutInSeconds = element.GetStandaloneParameter<double?>(InterAppTimeout_ParameterId) ?? throw new ParameterNotFoundException($"Unable to find parameter {InterAppTimeout_ParameterId} in element {element.Name} ({element.DmsElementId})");
+
 				var retrievedTimeout = TimeSpan.FromSeconds(timeoutInSeconds.GetValue().Value);
 
 				Log($"Timeout: {timeout}");

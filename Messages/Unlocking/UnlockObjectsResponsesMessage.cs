@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking
 {
 	using System.Collections.Generic;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
 
 	/// <summary>

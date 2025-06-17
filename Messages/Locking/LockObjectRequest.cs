@@ -4,7 +4,7 @@
 	using System.Collections.Generic;
 
 	/// <summary>
-	/// Represents a request to lock a single object.
+	/// Represents a request to lock an object.
 	/// </summary>
 	public class LockObjectRequest
 	{
@@ -24,7 +24,7 @@
 		public string LockRequesterInfo { get; set; }
 
 		/// <summary>
-		/// Gets or sets collection of related objects of specified type.
+		/// Gets or sets collection of requests to lock objects that are linked to this <see cref="LockObjectRequest"/>.
 		/// </summary>
 		public List<LockObjectRequest> LinkedObjectRequests { get; set; } = new List<LockObjectRequest>();
 

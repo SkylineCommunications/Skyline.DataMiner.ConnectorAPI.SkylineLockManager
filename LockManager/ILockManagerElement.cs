@@ -27,12 +27,14 @@
 		/// Attempts to unlock the given object.
 		/// </summary>
 		/// <param name="request">Represents the requests to unlock the object.</param>
-		void UnlockObject(UnlockObjectRequest request);
+		/// <returns>A <see cref="IUnlockInfo"/> object, containing info about the unlocked object.</returns>
+		IUnlockInfo UnlockObject(UnlockObjectRequest request);
 
 		/// <summary>
 		/// Attempts to unlock the given objects.
 		/// </summary>
 		/// <param name="requests">Represents the requests to unlock objects.</param>
-		void UnlockObjects(IEnumerable<UnlockObjectRequest> requests);
+		/// <returns>A collection of <see cref="IUnlockInfo"/>, containing info about the unlocked objects.</returns>
+		IEnumerable<IUnlockInfo> UnlockObjects(IEnumerable<UnlockObjectRequest> requests);
 	}
 }

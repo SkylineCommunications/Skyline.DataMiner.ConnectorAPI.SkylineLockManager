@@ -2,29 +2,19 @@
 {
 	using System;
 
-	/// <summary>
-	/// Output of lock request.
-	/// </summary>
+	/// <inheritdoc cref="ILockInfo"/>
 	public class LockInfo : ILockInfo
 	{
-		/// <summary>
-		/// Gets or sets the Id of the requested object.
-		/// </summary>
+		/// <inheritdoc cref="ILockInfo.ObjectId"/>
 		public string ObjectId { get; set; }
 
-		/// <summary>
-		/// Gets or sets a value indicating whether the lock is granted or not.
-		/// </summary>
+		/// <inheritdoc cref="ILockInfo.IsGranted"/>
 		public bool IsGranted { get; set; }
 
-		/// <summary>
-		/// Gets or sets the context from which the user was granted the lock to the requested object.
-		/// </summary>
+		/// <inheritdoc cref="ILockInfo.LockHolderInfo"/>
 		public string LockHolderInfo { get; set; }
 
-		/// <summary>
-		/// Gets or sets the time indication on when the requested lock will be released.
-		/// </summary>
+		/// <inheritdoc cref="ILockInfo.AutoUnlockTimestamp"/>
 		public DateTime AutoUnlockTimestamp { get; set; }
 	}
 }
