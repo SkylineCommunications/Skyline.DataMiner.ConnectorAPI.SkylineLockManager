@@ -75,14 +75,17 @@
 		public IEnumerable<ILockInfo> LockObjects(IEnumerable<LockObjectRequest> requests)
 		{
 			if (requests is null) throw new ArgumentNullException(nameof(requests));
-			if (!requests.Any()) return Enumerable.Empty<ILockInfo>();
+
+			var requestsList = requests.ToList();
+
+			if (!requestsList.Any()) return Enumerable.Empty<ILockInfo>();
 
 			var lockObjectsRequestsMessage = new LockObjectsRequestsMessage
 			{
-				Requests = requests.ToList(),
+				Requests = requestsList,
 			};
 
-			Log($"Requesting locks for {string.Join(", ", requests)}");
+			Log($"Requesting locks for {string.Join(", ", requestsList)}");
 
 			SendMessageWithResponse(lockObjectsRequestsMessage, out LockObjectsResponsesMessage responseMessage);
 
@@ -107,16 +110,19 @@
 		public void UnlockObjects(IEnumerable<UnlockObjectRequest> requests)
 		{
 			if (requests is null) throw new ArgumentNullException(nameof(requests));
-			if (!requests.Any()) return;
+
+			var requestsList = requests.ToList();
+
+			if (!requestsList.Any()) return;
 
 			var message = new UnlockObjectsRequestsMessage
 			{
-				Requests = requests,
+				Requests = requestsList,
 			};
 
 			SendMessageWithoutResponse(message);
 
-			Log($"Releasing locks for {string.Join(", ", requests)}");
+			Log($"Releasing locks for {string.Join(", ", requestsList)}");
 		}
 
 		private void SendMessageWithoutResponse(Message message)
