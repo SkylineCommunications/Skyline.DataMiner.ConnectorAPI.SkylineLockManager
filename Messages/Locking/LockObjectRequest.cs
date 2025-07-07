@@ -29,8 +29,8 @@
 		public List<LockObjectRequest> LinkedObjectRequests { get; set; } = new List<LockObjectRequest>();
 
 		/// <summary>
-		/// Gets or sets the timestamp at which the element can automatically release the lock. If set to null, the default value defined in the element will be used.
+		/// Gets or sets the timespan after which the element will automatically release the lock. If set to null, the default value defined in the element will be used.
 		/// </summary>
-		public DateTime? AutoUnlockTimestamp { get; set; }
+		public TimeSpan? AutoUnlockTimeSpan { get; set; }
 	}
 }
