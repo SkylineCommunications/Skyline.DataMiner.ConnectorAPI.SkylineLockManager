@@ -27,6 +27,11 @@
 		private readonly Lazy<TimeSpan> timeout;
 
 		/// <summary>
+		/// Name of the Connector with which this element is able to communicate.
+		/// </summary>
+		public static readonly string SkylineLockManager_ConnectorName = "Skyline Lock Manager";
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="LockManagerElement"/> class.
 		/// </summary>
 		/// <param name="connection">Connection used to communicate with the Lock Manager element.</param>
@@ -43,6 +48,26 @@
 			this.timeout = new Lazy<TimeSpan>(GetTimeout);
 
 			element = connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId));
+
+			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="LockManagerElement"/> class.
+		/// </summary>
+		/// <param name="connection">Connection used to communicate with the Lock Manager element.</param>
+		/// <param name="elementName">Name of the Lock Manager element.</param>
+		/// <param name="logger">Object that is used to log info about locks.</param>
+		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
+		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
+		public LockManagerElement(IConnection connection, string elementName, ILogger logger = null)
+		{
+			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			this.logger = logger;
+			this.timeout = new Lazy<TimeSpan>(GetTimeout);
+
+			element = connection.GetDms().GetElement(elementName) ?? throw new ArgumentException($"Unable to find an element with Name {elementName}", nameof(elementName));
 
 			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
 		}
@@ -157,7 +182,7 @@
 			else
 			{
 				throw new InvalidOperationException($"Received response is not of type {typeof(T)}");
-			}	
+			}
 		}
 
 		private TimeSpan GetTimeout()
