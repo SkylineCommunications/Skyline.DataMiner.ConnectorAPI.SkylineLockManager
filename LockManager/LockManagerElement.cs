@@ -17,19 +17,25 @@
 	/// <inheritdoc cref="ILockManagerElement"/>
 	public class LockManagerElement : ILockManagerElement
 	{
-		private static readonly int InterAppReceive_ParameterId = 9000000;
 		private static readonly int InterAppTimeout_ParameterId = 100;
+		private static readonly int InterAppReceive_ParameterId = 9000000;
 
+		private readonly Lazy<TimeSpan> timeout;
 		private readonly IConnection connection;
 		private readonly IDmsElement element;
 		private readonly ILogger logger;
-
-		private readonly Lazy<TimeSpan> timeout;
 
 		/// <summary>
 		/// Name of the Connector with which this element is able to communicate.
 		/// </summary>
 		public static readonly string SkylineLockManager_ConnectorName = "Skyline Lock Manager";
+
+		private LockManagerElement(IConnection connection, ILogger logger = null)
+		{
+			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			this.timeout = new Lazy<TimeSpan>(GetTimeout);
+			this.logger = logger;
+		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LockManagerElement"/> class.
@@ -41,13 +47,9 @@
 		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
-		public LockManagerElement(IConnection connection, int agentId, int elementId, ILogger logger = null)
+		public LockManagerElement(IConnection connection, int agentId, int elementId, ILogger logger = null) : this(connection, logger)
 		{
-			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
-			this.logger = logger;
-			this.timeout = new Lazy<TimeSpan>(GetTimeout);
-
-			element = connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId));
+			this.element = connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId));
 
 			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
 		}
@@ -61,13 +63,9 @@
 		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
-		public LockManagerElement(IConnection connection, string elementName, ILogger logger = null)
+		public LockManagerElement(IConnection connection, string elementName, ILogger logger = null) : this(connection, logger)
 		{
-			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
-			this.logger = logger;
-			this.timeout = new Lazy<TimeSpan>(GetTimeout);
-
-			element = connection.GetDms().GetElement(elementName) ?? throw new ArgumentException($"Unable to find an element with Name {elementName}", nameof(elementName));
+			this.element = connection.GetDms().GetElement(elementName) ?? throw new ArgumentException($"Unable to find an element with Name {elementName}", nameof(elementName));
 
 			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
 		}
@@ -110,7 +108,7 @@
 				Requests = requestsList,
 			};
 
-			Log($"Requesting locks for {string.Join(", ", requestsList)}");
+			Log($"Requesting locks for {String.Join(", ", requestsList.Select(r => r.ObjectId))}");
 
 			SendMessageWithResponse(lockObjectsRequestsMessage, out LockObjectsResponsesMessage responseMessage);
 
@@ -147,7 +145,7 @@
 
 			SendMessageWithoutResponse(message);
 
-			Log($"Releasing locks for {string.Join(", ", requestsList)}");
+			Log($"Unlocked objects {String.Join(", ", requestsList.Select(r => r.ObjectId))}");
 		}
 
 		private void SendMessageWithoutResponse(Message message)
@@ -193,7 +191,7 @@
 
 				var retrievedTimeout = TimeSpan.FromSeconds(timeoutInSeconds.GetValue().Value);
 
-				Log($"Timeout: {timeout}");
+				Log($"InterApp timeout: {retrievedTimeout}");
 
 				return retrievedTimeout;
 			}
@@ -201,7 +199,7 @@
 			{
 				var retrievedTimeout = TimeSpan.FromSeconds(30);
 
-				Log($"Unable to retrieve timeout due to: {e}");
+				Log($"Exception while retrieving InterApp timeout: {e}");
 
 				return retrievedTimeout;
 			}
