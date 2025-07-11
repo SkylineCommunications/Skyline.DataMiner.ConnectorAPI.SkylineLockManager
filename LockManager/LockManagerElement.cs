@@ -4,37 +4,37 @@
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
-	using Newtonsoft.Json;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
-	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
 	using Skyline.DataMiner.Net;
 
 	/// <inheritdoc cref="ILockManagerElement"/>
 	public class LockManagerElement : ILockManagerElement
 	{
-		private static readonly int InterAppTimeout_ParameterId = 100;
-		private static readonly int InterAppReceive_ParameterId = 9000000;
-
-		private readonly Lazy<TimeSpan> timeout;
-		private readonly IConnection connection;
-		private readonly IDmsElement element;
+		private readonly IInterAppHandler interAppHandler;
+		private readonly IUnlockListener unlockListener = new UnlockListener();
 		private readonly ILogger logger;
+
+		private bool disposedValue;
 
 		/// <summary>
 		/// Name of the Connector with which this element is able to communicate.
 		/// </summary>
 		public static readonly string SkylineLockManager_ConnectorName = "Skyline Lock Manager";
 
-		private LockManagerElement(IConnection connection, ILogger logger = null)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="LockManagerElement"/> class. To be used by unit tests only.
+		/// </summary>
+		public LockManagerElement(IConnection connection, IDmsElement element, IUnlockListener unlockListener = null, IInterAppHandler interAppHandler = null)
 		{
-			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
-			this.timeout = new Lazy<TimeSpan>(GetTimeout);
-			this.logger = logger;
+			this.unlockListener = unlockListener ?? new UnlockListener();
+			this.interAppHandler = interAppHandler ?? new InterAppHandler(connection, element, logger);
+
+			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
 		}
 
 		/// <summary>
@@ -47,11 +47,15 @@
 		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
-		public LockManagerElement(IConnection connection, int agentId, int elementId, ILogger logger = null) : this(connection, logger)
+		public LockManagerElement(IConnection connection, int agentId, int elementId, ILogger logger = null)
 		{
-			this.element = connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId));
+			this.logger = logger;
+
+			var element = connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId));
 
 			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
+
+			this.interAppHandler = new InterAppHandler(connection, element, logger);
 		}
 
 		/// <summary>
@@ -63,14 +67,16 @@
 		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
-		public LockManagerElement(IConnection connection, string elementName, ILogger logger = null) : this(connection, logger)
+		public LockManagerElement(IConnection connection, string elementName, ILogger logger = null)
 		{
-			this.element = connection.GetDms().GetElement(elementName) ?? throw new ArgumentException($"Unable to find an element with Name {elementName}", nameof(elementName));
+			this.logger = logger;
+
+			var element = connection.GetDms().GetElement(elementName) ?? throw new ArgumentException($"Unable to find an element with Name {elementName}", nameof(elementName));
 
 			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
-		}
 
-		private TimeSpan Timeout => timeout.Value;
+			this.interAppHandler = new InterAppHandler(connection, element, logger);
+		}
 
 		/// <summary>
 		/// A collection containing all classes used in InterApp communication.
@@ -84,12 +90,24 @@
 			typeof(FailureMessage),
 		};
 
-		/// <inheritdoc cref="ILockManagerElement.LockObject(LockObjectRequest)"/>
+		/// <inheritdoc cref="ILockManagerElement.LockObject(LockObjectRequest, TimeSpan?)"/>
 		/// <exception cref="ArgumentNullException"/>
 		/// <exception cref="InvalidOperationException"/>
-		public ILockInfo LockObject(LockObjectRequest request)
+		public ILockInfo LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null)
 		{
-			return LockObjects(new[] { request }).Single();
+			if (request == null)
+			{
+				throw new ArgumentNullException(nameof(request));
+			}
+
+			if (maxWaitingTime.HasValue)
+			{
+				return LockObjectWithWait(request, maxWaitingTime.Value);
+			}
+			else
+			{
+				return LockObjectWithoutWait(request);
+			}		
 		}
 
 		/// <inheritdoc cref="ILockManagerElement.LockObjects(IEnumerable{LockObjectRequest})"/>
@@ -110,7 +128,7 @@
 
 			Log($"Requesting locks for {String.Join(", ", requestsList.Select(r => r.ObjectId))}");
 
-			SendMessageWithResponse(lockObjectsRequestsMessage, out LockObjectsResponsesMessage responseMessage);
+			var responseMessage = interAppHandler.SendMessageWithResponse<LockObjectsResponsesMessage>(lockObjectsRequestsMessage);
 
 			return responseMessage.Responses.Select(x => new LockInfo
 			{
@@ -143,66 +161,68 @@
 				Requests = requestsList,
 			};
 
-			SendMessageWithoutResponse(message);
+			interAppHandler.SendMessageWithoutResponse(message);
 
 			Log($"Unlocked objects {String.Join(", ", requestsList.Select(r => r.ObjectId))}");
 		}
 
-		private void SendMessageWithoutResponse(Message message)
+		public void Dispose()
 		{
-			var commands = InterAppCallFactory.CreateNew();
-			commands.Messages.Add(message);
-
-			commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, InterAppKnownTypes);
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
 		}
 
-		private void SendMessageWithResponse<T>(Message message, out T responseMessage) where T : Message
+		protected virtual void Dispose(bool disposing)
 		{
-			responseMessage = default;
-
-			var commands = InterAppCallFactory.CreateNew();
-			commands.Messages.Add(message);
-
-			Log($"Message: {JsonConvert.SerializeObject(message)}");
-
-			var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, InterAppKnownTypes).First();
-
-			Log($"Response: {JsonConvert.SerializeObject(response)}");
-
-			if (response is FailureMessage failureResponse)
+			if (!disposedValue)
 			{
-				throw new InvalidOperationException(failureResponse.Message);
-			}
-			else if (response is T expectedResponse)
-			{
-				responseMessage = expectedResponse;
-			}
-			else
-			{
-				throw new InvalidOperationException($"Received response is not of type {typeof(T)}");
+				if (disposing)
+				{
+					unlockListener?.Dispose();
+				}
+
+				disposedValue = true;
 			}
 		}
 
-		private TimeSpan GetTimeout()
+		private ILockInfo LockObjectWithWait(LockObjectRequest request, TimeSpan maxWaitingTime)
 		{
-			try
+			if (request == null)
 			{
-				var timeoutInSeconds = element.GetStandaloneParameter<double?>(InterAppTimeout_ParameterId) ?? throw new ParameterNotFoundException($"Unable to find parameter {InterAppTimeout_ParameterId} in element {element.Name} ({element.DmsElementId})");
-
-				var retrievedTimeout = TimeSpan.FromSeconds(timeoutInSeconds.GetValue().Value);
-
-				Log($"InterApp timeout: {retrievedTimeout}");
-
-				return retrievedTimeout;
+				throw new ArgumentNullException(nameof(request));
 			}
-			catch (Exception e)
+
+			if (maxWaitingTime <= TimeSpan.Zero)
 			{
-				var retrievedTimeout = TimeSpan.FromSeconds(30);
-
-				Log($"Exception while retrieving InterApp timeout: {e}");
-
-				return retrievedTimeout;
+				throw new ArgumentOutOfRangeException(nameof(maxWaitingTime), "Max waiting time must be greater than zero.");
 			}
+
+			var taskToWaitForUnlock = unlockListener.StartListeningForUnlock(request.ObjectId);
+
+			var lockInfo = LockObject(request);
+
+			if (lockInfo.IsGranted)
+			{
+				unlockListener.StopListeningForUnlock(request.ObjectId);
+
+				return lockInfo;
+			}
+
+			bool objectGotUnlockedAfterWaiting = taskToWaitForUnlock.Wait(maxWaitingTime);
+
+			unlockListener.StopListeningForUnlock(request.ObjectId);
+
+			if (objectGotUnlockedAfterWaiting)
+			{
+				lockInfo = LockObject(request);
+			}
+
+			return lockInfo;
+		}
+
+		private ILockInfo LockObjectWithoutWait(LockObjectRequest request)
+		{
+			return LockObjects(new[] { request }).Single();
 		}
 
 		private void Log(string message)

@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager
 {
+	using System;
 	using System.Collections.Generic;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking;
@@ -7,14 +8,15 @@
 	/// <summary>
 	/// Represents an API to communicate with an element running the Skyline Lock Manager connector.
 	/// </summary>
-	public interface ILockManagerElement
+	public interface ILockManagerElement : IDisposable
 	{
 		/// <summary>
-		/// Attempts to lock the given object.
+		/// Attempts to lock the given object. Optionally, it can wait for a specified time until the lock is granted.
 		/// </summary>
 		/// <param name="request">Represents the requests to lock object.</param>
+		/// <param name="maxWaitingTime">Optional timespan to wait until lock gets granted.</param>
 		/// <returns>A <see cref="ILockInfo"/> object, containing info about the obtained lock.</returns>
-		ILockInfo LockObject(LockObjectRequest request);
+		ILockInfo LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null);
 
 		/// <summary>
 		/// Attempts to lock the given objects.
