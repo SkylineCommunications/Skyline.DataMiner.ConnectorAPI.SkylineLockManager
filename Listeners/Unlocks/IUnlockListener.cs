@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager
+﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners.Unlocks
 {
 	using System;
 	using System.Threading.Tasks;

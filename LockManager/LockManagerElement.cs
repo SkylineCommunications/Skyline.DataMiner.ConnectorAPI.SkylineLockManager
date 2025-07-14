@@ -5,6 +5,9 @@
 	using System.Diagnostics;
 	using System.Linq;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners.HigherPriorityLockRequests;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners.Unlocks;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking;
@@ -17,6 +20,7 @@
 	{
 		private readonly IInterAppHandler interAppHandler;
 		private readonly IUnlockListener unlockListener = new UnlockListener();
+		private readonly IHigherPriorityLockRequestListener higherPrioLockRequestListener = new HigherPriorityLockRequestListener();
 		private readonly ILogger logger;
 
 		private bool disposedValue;
@@ -27,12 +31,25 @@
 		public static readonly string SkylineLockManager_ConnectorName = "Skyline Lock Manager";
 
 		/// <summary>
+		/// A collection containing all classes used in InterApp communication.
+		/// </summary>
+		public static IReadOnlyCollection<Type> InterAppKnownTypes { get; } = new List<Type>
+		{
+			typeof(IInterAppCall),
+			typeof(LockObjectsRequestsMessage),
+			typeof(LockObjectsResponsesMessage),
+			typeof(UnlockObjectsRequestsMessage),
+			typeof(FailureMessage),
+		};
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="LockManagerElement"/> class. To be used by unit tests only.
 		/// </summary>
-		public LockManagerElement(IConnection connection, IDmsElement element, IUnlockListener unlockListener = null, IInterAppHandler interAppHandler = null)
+		public LockManagerElement(IConnection connection, IDmsElement element, IUnlockListener unlockListener = null, IInterAppHandler interAppHandler = null, IHigherPriorityLockRequestListener higherPrioLockRequestListener = null)
 		{
-			this.unlockListener = unlockListener ?? new UnlockListener();
+			this.higherPrioLockRequestListener = higherPrioLockRequestListener ?? new HigherPriorityLockRequestListener();
 			this.interAppHandler = interAppHandler ?? new InterAppHandler(connection, element, logger);
+			this.unlockListener = unlockListener ?? new UnlockListener();
 
 			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
 		}
@@ -78,17 +95,36 @@
 			this.interAppHandler = new InterAppHandler(connection, element, logger);
 		}
 
-		/// <summary>
-		/// A collection containing all classes used in InterApp communication.
-		/// </summary>
-		public static IReadOnlyCollection<Type> InterAppKnownTypes { get; } = new List<Type>
+		/// <inheritdoc cref="IHigherPriorityLockRequestListener.HigherPriorityLockRequestReceived"/>
+		public event EventHandler<ObjectIdAndPriorityEventArgs> HigherPriorityLockRequestReceived
 		{
-			typeof(IInterAppCall),
-			typeof(LockObjectsRequestsMessage),
-			typeof(LockObjectsResponsesMessage),
-			typeof(UnlockObjectsRequestsMessage),
-			typeof(FailureMessage),
-		};
+			add
+			{
+				lock (higherPrioLockRequestListener)
+				{
+					higherPrioLockRequestListener.HigherPriorityLockRequestReceived += value;
+				}
+			}
+			remove
+			{
+				lock (higherPrioLockRequestListener)
+				{
+					higherPrioLockRequestListener.HigherPriorityLockRequestReceived -= value;
+				}
+			}
+		}
+
+		/// <inheritdoc cref="IHigherPriorityLockRequestListener.ListenForLockRequestsWithHigherPriorityThan(string, Priority)"/>
+		public void ListenForLockRequestsWithHigherPriorityThan(string objectId, Priority priorityToCompareWith)
+		{
+			higherPrioLockRequestListener.ListenForLockRequestsWithHigherPriorityThan(objectId, priorityToCompareWith);
+		}
+
+		/// <inheritdoc cref="IHigherPriorityLockRequestListener.StopListeningForLockRequestsWithHigherPriorityThan(string, Priority)"/>
+		public void StopListeningForLockRequestsWithHigherPriorityThan(string objectId, Priority priorityToCompareWith)
+		{
+			higherPrioLockRequestListener.StopListeningForLockRequestsWithHigherPriorityThan(objectId, priorityToCompareWith);
+		}
 
 		/// <inheritdoc cref="ILockManagerElement.LockObject(LockObjectRequest, TimeSpan?)"/>
 		/// <exception cref="ArgumentNullException"/>
@@ -166,19 +202,28 @@
 			Log($"Unlocked objects {String.Join(", ", requestsList.Select(r => r.ObjectId))}");
 		}
 
+		/// <inheritdoc cref="IDisposable.Dispose"/>
 		public void Dispose()
 		{
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
 		}
 
+		/// <summary>
+		/// Releases the resources used by the current instance of the class.
+		/// </summary>
+		/// <remarks>This method should be called when the instance is no longer needed to free up resources.  It
+		/// ensures that any managed resources are properly disposed of.  For derived classes, override <see
+		/// cref="Dispose(bool)"/> to release additional resources.</remarks>
+		/// <param name="disposing"></param>
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!disposedValue)
 			{
 				if (disposing)
 				{
-					unlockListener?.Dispose();
+					unlockListener.Dispose();
+					higherPrioLockRequestListener.Dispose();
 				}
 
 				disposedValue = true;

@@ -2,13 +2,14 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners.HigherPriorityLockRequests;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Unlocking;
 
 	/// <summary>
 	/// Represents an API to communicate with an element running the Skyline Lock Manager connector.
 	/// </summary>
-	public interface ILockManagerElement : IDisposable
+	public interface ILockManagerElement : IHigherPriorityLockRequestListener
 	{
 		/// <summary>
 		/// Attempts to lock the given object. Optionally, it can wait for a specified time until the lock is granted.
