@@ -15,7 +15,7 @@
 	/// </summary>
 	public partial class HigherPriorityLockRequestListener : Listener, IHigherPriorityLockRequestListener
 	{
-		private static readonly int HigherPrioLockRequests_ParameterId = 101;
+		private static readonly int HigherPrioLockRequests_ParameterId = 201;
 
 		private readonly ConcurrentHashSet<ObjectIdAndPriority> objectIdsAndPriorities = new ConcurrentHashSet<ObjectIdAndPriority>();
 

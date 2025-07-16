@@ -10,7 +10,7 @@
 	/// <inheritdoc cref="IUnlockListener"/>
 	public class UnlockListener : Listener, IUnlockListener
 	{
-		private static readonly int UnlockUpdates_ParameterId = 101;
+		private static readonly int UnlockUpdates_ParameterId = 200;
 
 		private readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> taskCompletionSources = new ConcurrentDictionary<string, TaskCompletionSource<bool>>();
 
