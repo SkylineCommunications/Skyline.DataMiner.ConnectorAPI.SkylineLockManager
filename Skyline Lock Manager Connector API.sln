@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36127.28
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorAPI.SkylineLockManager", "ConnectorAPI.SkylineLockManager.csproj", "{659790E3-43BE-4E39-B1F6-3080C741BAA9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorAPI.SkylineLockManager", "ConnectorAPI.SkylineLockManager\ConnectorAPI.SkylineLockManager.csproj", "{659790E3-43BE-4E39-B1F6-3080C741BAA9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorAPI.SkylineLockManagerTests", "..\ConnectorAPI.SkylineLockManagerTests\ConnectorAPI.SkylineLockManagerTests.csproj", "{DD85F1BA-09EC-496D-AFA9-95FBCCD2188F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectorAPI.SkylineLockManagerTests", "ConnectorAPI.SkylineLockManagerTests\ConnectorAPI.SkylineLockManagerTests.csproj", "{DD85F1BA-09EC-496D-AFA9-95FBCCD2188F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
