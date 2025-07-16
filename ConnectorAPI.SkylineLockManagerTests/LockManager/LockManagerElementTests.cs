@@ -2,6 +2,7 @@
 {
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 	using Moq;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.LockManager;
@@ -25,7 +26,7 @@
 			var lockManagerElement = new LockManagerElement(connectionMock.Object, elementMock.Object, higherPrioLockRequestListener: higherPrioLockRequestListenerMock);
 
 			// Act
-			lockManagerElement.ListenForLockRequestsWithHigherPriorityThan("objectId", Priority.Medium);
+			lockManagerElement.ListenForLockRequestsWithHigherPriorityThan(new ObjectIdAndPriority("objectId", Priority.Medium));
 
 			bool higherPrioLockRequestCameIn = false;
 			lockManagerElement.HigherPriorityLockRequestReceived += (sender, args) =>
@@ -60,7 +61,7 @@
 			var lockManagerElement = new LockManagerElement(connectionMock.Object, elementMock.Object, higherPrioLockRequestListener: higherPrioLockRequestListenerMock);
 
 			// Act
-			lockManagerElement.ListenForLockRequestsWithHigherPriorityThan("objectId", Priority.Medium);
+			lockManagerElement.ListenForLockRequestsWithHigherPriorityThan(new ObjectIdAndPriority("objectId", Priority.Medium));
 
 			bool higherPrioLockRequestCameIn = false;
 			lockManagerElement.HigherPriorityLockRequestReceived += (sender, args) =>

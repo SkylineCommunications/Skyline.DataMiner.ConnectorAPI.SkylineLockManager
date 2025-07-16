@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners.HigherPriorityLockRequests
 {
 	using System;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Locking;
 
 	/// <summary>
 	/// Defines a contract for listening to and handling higher-priority lock requests.
@@ -23,15 +22,11 @@
 		/// <summary>
 		/// Returns a task that will complete when a higher priority lock request is made for the specified object ID and priority.
 		/// </summary>
-		/// <param name="objectId">The object ID.</param>
-		/// <param name="priorityToCompareWith">The priority to compare with.</param>
-		void ListenForLockRequestsWithHigherPriorityThan(string objectId, Priority priorityToCompareWith);
+		void ListenForLockRequestsWithHigherPriorityThan(params ObjectIdAndPriority[] objectIdAndPriorities);
 
 		/// <summary>
 		/// Stops listening for higher priority lock requests for a specific object ID and priority.
 		/// </summary>
-		/// <param name="objectId">The object ID.</param>
-		/// <param name="priorityToCompareWith">The priority to compare with.</param>
-		void StopListeningForLockRequestsWithHigherPriorityThan(string objectId, Priority priorityToCompareWith);
+		void StopListeningForLockRequestsWithHigherPriorityThan(params ObjectIdAndPriority[] objectIdAndPriorities);
 	}
 }
