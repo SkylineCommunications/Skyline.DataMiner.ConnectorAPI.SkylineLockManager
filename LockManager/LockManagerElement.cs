@@ -19,8 +19,8 @@
 	public class LockManagerElement : ILockManagerElement
 	{
 		private readonly IInterAppHandler interAppHandler;
-		private readonly IUnlockListener unlockListener = new UnlockListener();
-		private readonly IHigherPriorityLockRequestListener higherPrioLockRequestListener = new HigherPriorityLockRequestListener();
+		private readonly IUnlockListener unlockListener;
+		private readonly IHigherPriorityLockRequestListener higherPrioLockRequestListener;
 		private readonly ILogger logger;
 
 		private bool disposedValue;
@@ -45,13 +45,14 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LockManagerElement"/> class. To be used by unit tests only.
 		/// </summary>
-		public LockManagerElement(IConnection connection, IDmsElement element, IUnlockListener unlockListener = null, IInterAppHandler interAppHandler = null, IHigherPriorityLockRequestListener higherPrioLockRequestListener = null)
+		public LockManagerElement(IConnection connection, IDmsElement element, IUnlockListener unlockListener = null, IInterAppHandler interAppHandler = null, IHigherPriorityLockRequestListener higherPrioLockRequestListener = null, ILogger logger = null)
 		{
-			this.higherPrioLockRequestListener = higherPrioLockRequestListener ?? new HigherPriorityLockRequestListener();
-			this.interAppHandler = interAppHandler ?? new InterAppHandler(connection, element, logger);
-			this.unlockListener = unlockListener ?? new UnlockListener();
-
 			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
+
+			this.higherPrioLockRequestListener = higherPrioLockRequestListener ?? new HigherPriorityLockRequestListener(element);
+			this.interAppHandler = interAppHandler ?? new InterAppHandler(connection, element, logger);
+			this.unlockListener = unlockListener ?? new UnlockListener(element);
+			this.logger = logger;
 		}
 
 		/// <summary>
@@ -64,15 +65,9 @@
 		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
-		public LockManagerElement(IConnection connection, int agentId, int elementId, ILogger logger = null)
+		public LockManagerElement(IConnection connection, int agentId, int elementId, ILogger logger = null) : this(connection, connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId)), logger: logger)
 		{
-			this.logger = logger;
-
-			var element = connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId));
-
-			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
-
-			this.interAppHandler = new InterAppHandler(connection, element, logger);
+			
 		}
 
 		/// <summary>
@@ -84,19 +79,13 @@
 		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
-		public LockManagerElement(IConnection connection, string elementName, ILogger logger = null)
+		public LockManagerElement(IConnection connection, string elementName, ILogger logger = null) : this(connection, connection.GetDms().GetElement(elementName) ?? throw new ArgumentException($"Unable to find an element with Name {elementName}", nameof(elementName)), logger: logger)
 		{
-			this.logger = logger;
 
-			var element = connection.GetDms().GetElement(elementName) ?? throw new ArgumentException($"Unable to find an element with Name {elementName}", nameof(elementName));
-
-			if (element.State != ElementState.Active) throw new InvalidOperationException($"Element {element.Name} is not active");
-
-			this.interAppHandler = new InterAppHandler(connection, element, logger);
 		}
 
 		/// <inheritdoc cref="IHigherPriorityLockRequestListener.HigherPriorityLockRequestReceived"/>
-		public event EventHandler<ObjectIdAndPriorityEventArgs> HigherPriorityLockRequestReceived
+		public event EventHandler<LockObjectRequestEventArgs> HigherPriorityLockRequestReceived
 		{
 			add
 			{

@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners.HigherPriorityLockRequests
 {
 	using System;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Locking;
 
 	/// <summary>
 	/// Defines a contract for listening to and handling higher-priority lock requests.
@@ -17,7 +18,7 @@
 		/// <remarks>This event is triggered to notify subscribers that a lock request with a higher priority has been
 		/// made. Subscribers can use this event to handle scenarios where priority-based lock contention needs to be
 		/// resolved.</remarks>
-		event EventHandler<ObjectIdAndPriorityEventArgs> HigherPriorityLockRequestReceived;
+		event EventHandler<LockObjectRequestEventArgs> HigherPriorityLockRequestReceived;
 
 		/// <summary>
 		/// Returns a task that will complete when a higher priority lock request is made for the specified object ID and priority.

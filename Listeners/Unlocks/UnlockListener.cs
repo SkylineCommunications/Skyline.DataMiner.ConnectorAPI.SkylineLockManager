@@ -4,16 +4,32 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Threading.Tasks;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common.Subscription.Monitors;
 
 	/// <inheritdoc cref="IUnlockListener"/>
 	public class UnlockListener : Listener, IUnlockListener
 	{
 		private static readonly int UnlockUpdates_ParameterId = 101;
 
+		private readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> taskCompletionSources = new ConcurrentDictionary<string, TaskCompletionSource<bool>>();
+
+		private readonly IDmsStandaloneParameter<string> parameter;
+
 		/// <summary>
-		/// A dictionary that holds TaskCompletionSources for each object ID being listened to.
+		/// Initializes a new instance of the <see cref="UnlockListener"/> class with the specified DMS element.
 		/// </summary>
-		protected readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> taskCompletionSources = new ConcurrentDictionary<string, TaskCompletionSource<bool>>();
+		/// <param name="element">The DMS element used to retrieve the standalone parameter. This parameter cannot be <see langword="null"/>.</param>
+		/// <exception cref="ArgumentNullException">Thrown if <paramref name="element"/> is <see langword="null"/>.</exception>
+		public UnlockListener(IDmsElement element)
+		{
+			if (element == null)
+			{
+				throw new ArgumentNullException(nameof(element));
+			}
+
+			this.parameter = element.GetStandaloneParameter<string>(UnlockUpdates_ParameterId);
+		}
 
 		/// <inheritdoc cref="IUnlockListener.StartListeningForUnlock(string)"/>
 		public Task StartListeningForUnlock(string objectId)
@@ -48,19 +64,17 @@
 		/// </summary>
 		protected override void StartMonitor()
 		{
-			// This method should start the monitor that listens for unlock events
-			// and calls the reportUnlock action when an unlock event is detected.
-			// Implementation depends on the specific requirements and context of the application.
-
-			Action reportUnlock = () =>
+			Action<ParamValueChange<string>> reportUnlock = (change) =>
 			{
-				string unlockedObjectId = Guid.NewGuid().ToString(); // Placeholder for actual object ID
+				string unlockedObjectId = change.Value;
 
 				if (taskCompletionSources.TryGetValue(unlockedObjectId, out var taskCompletionSource))
 				{
 					taskCompletionSource.SetResult(true);
 				}
 			};
+
+			parameter.StartValueMonitor(sourceId, reportUnlock);
 		}
 
 		/// <summary>
@@ -68,8 +82,7 @@
 		/// </summary>
 		protected override void StopMonitor()
 		{
-			// This method should stop the monitor that listens for unlock events.
-			// Implementation depends on the specific requirements and context of the application.
+			parameter.StopValueMonitor(sourceId);
 		}
 
 
