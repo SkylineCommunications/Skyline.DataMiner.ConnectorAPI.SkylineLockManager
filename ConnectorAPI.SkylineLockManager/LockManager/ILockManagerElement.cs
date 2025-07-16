@@ -10,7 +10,7 @@
 	/// <summary>
 	/// Represents an API to communicate with an element running the Skyline Lock Manager connector.
 	/// </summary>
-	public interface ILockManagerElement
+	public interface ILockManagerElement : IDisposable
 	{
 		/// <summary>
 		/// Occurs when a higher-priority lock request is received.
