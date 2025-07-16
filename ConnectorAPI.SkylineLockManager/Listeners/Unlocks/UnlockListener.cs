@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Concurrent;
-	using System.Collections.Generic;
 	using System.Threading.Tasks;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common.Subscription.Monitors;
@@ -59,9 +58,7 @@
 			}
 		}
 
-		/// <summary>
-		/// Starts the monitor that listens for unlock events.
-		/// </summary>
+		/// <inheritdoc cref="Listener.StartMonitor()"/>
 		protected override void StartMonitor()
 		{
 			Action<ParamValueChange<string>> reportUnlock = (change) =>
@@ -77,15 +74,13 @@
 			parameter.StartValueMonitor(sourceId, reportUnlock);
 		}
 
-		/// <summary>
-		/// Stops the monitor that listens for unlock events.
-		/// </summary>
+		/// <inheritdoc cref="Listener.StopMonitor()"/>
 		protected override void StopMonitor()
 		{
 			parameter.StopValueMonitor(sourceId);
 		}
 
-
+		/// <inheritdoc cref="Listener.Dispose(bool)"/>
 		protected override void Dispose(bool disposing)
 		{
 			if (!disposedValue)
