@@ -26,7 +26,7 @@
 		/// <param name="request">Represents the requests to lock object.</param>
 		/// <param name="maxWaitingTime">Optional timespan to wait until lock gets granted.</param>
 		/// <returns>A <see cref="ILockInfo"/> object, containing info about the obtained lock.</returns>
-		ILockInfo LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null);
+		ILockObjectResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null);
 
 		/// <summary>
 		/// Attempts to lock the given objects.
@@ -34,7 +34,7 @@
 		/// <param name="requests">Represents the requests to lock objects.</param>
 		/// <param name="maxWaitingTime">Optional timespan to wait until lock gets granted.</param>
 		/// <returns>A collection of <see cref="ILockInfo"/>, containing info about the obtained locks.</returns>
-		IEnumerable<ILockInfo> LockObjects(IEnumerable<LockObjectRequest> requests, TimeSpan? maxWaitingTime = null);
+		ILockObjectsResult LockObjects(IEnumerable<LockObjectRequest> requests, TimeSpan? maxWaitingTime = null);
 
 		/// <summary>
 		/// Attempts to unlock the given object.

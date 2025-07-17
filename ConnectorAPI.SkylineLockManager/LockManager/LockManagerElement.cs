@@ -118,39 +118,21 @@
 
 		/// <inheritdoc cref="ILockManagerElement.LockObject(LockObjectRequest, TimeSpan?)"/>
 		/// <exception cref="ArgumentNullException"/>
-		public ILockInfo LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null)
+		public ILockObjectResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null)
 		{
 			if (request == null)
 			{
 				throw new ArgumentNullException(nameof(request));
 			}
 
-			return LockObjects(new[] { request }, maxWaitingTime).Single();
+			return LockObjectsInternal(new[] { request }, maxWaitingTime).GetSingleResult(request.ObjectId);
 		}
 
 		/// <inheritdoc cref="ILockManagerElement.LockObjects(IEnumerable{LockObjectRequest}, TimeSpan?)"/>
 		/// <exception cref="ArgumentNullException"/>
-		public IEnumerable<ILockInfo> LockObjects(IEnumerable<LockObjectRequest> requests, TimeSpan? maxWaitingTime = null)
+		public ILockObjectsResult LockObjects(IEnumerable<LockObjectRequest> requests, TimeSpan? maxWaitingTime = null)
 		{
-			if (requests == null)
-			{
-				throw new ArgumentNullException(nameof(requests));
-			}
-
-			var requestsList = requests.ToList();
-			if (!requestsList.Any())
-			{
-				return Enumerable.Empty<ILockInfo>();
-			}
-
-			if (maxWaitingTime.HasValue)
-			{
-				return LockObjectsWithWait(requestsList, maxWaitingTime.Value);
-			}
-			else
-			{
-				return LockObjectsWithoutWait(requestsList);
-			}
+			return LockObjectsInternal(requests, maxWaitingTime);
 		}
 
 		/// <inheritdoc cref="ILockManagerElement.UnlockObject(UnlockObjectRequest)"/>
@@ -208,7 +190,34 @@
 			}
 		}
 
-		private ICollection<ILockInfo> LockObjectsWithWait(ICollection<LockObjectRequest> requests, TimeSpan maxWaitingTime)
+		private LockObjectsResult LockObjectsInternal(IEnumerable<LockObjectRequest> requests, TimeSpan? maxWaitingTime)
+		{
+			if (requests == null)
+			{
+				throw new ArgumentNullException(nameof(requests));
+			}
+
+			var requestsList = requests.ToList();
+			if (!requestsList.Any())
+			{
+				return LockObjectsResult.Empty();
+			}
+
+			if (maxWaitingTime.HasValue)
+			{
+				var lockInfos = LockObjectsWithWait(requestsList, maxWaitingTime.Value, out var totalWaitingTime);
+
+				return new LockObjectsResult(lockInfos.ToDictionary(li => li.ObjectId), totalWaitingTime);
+			}
+			else
+			{
+				var lockInfos = LockObjectsWithoutWait(requestsList);
+
+				return new LockObjectsResult(lockInfos.ToDictionary(li => li.ObjectId), TimeSpan.Zero);
+			}
+		}
+
+		private ICollection<ILockInfo> LockObjectsWithWait(ICollection<LockObjectRequest> requests, TimeSpan maxWaitingTime, out TimeSpan totalWaitingTime)
 		{
 			if (requests == null)
 			{
@@ -231,18 +240,26 @@
 			{
 				unlockListener.StopListeningForUnlocks(objectIds);
 
+				totalWaitingTime = TimeSpan.Zero;
+
 				return lockInfos;
 			}
 
 			Log($"Start waiting until objects '{String.Join(", ", objectIds)}' are unlocked");
 
-			bool objectGotUnlockedAfterWaiting = Task.WaitAll(tasksToWaitForUnlock, maxWaitingTime);
+			var stopwatch = Stopwatch.StartNew();
 
-			Log($"Finished waiting until objects '{String.Join(", ", objectIds)}' are unlocked");
+			bool objectsGotUnlockedAfterWaiting = Task.WaitAll(tasksToWaitForUnlock, maxWaitingTime);
+
+			stopwatch.Stop();
+
+			totalWaitingTime = stopwatch.Elapsed;
+
+			Log($"Finished waiting until objects '{String.Join(", ", objectIds)}' are unlocked, took {totalWaitingTime}");
 
 			unlockListener.StopListeningForUnlocks(objectIds);
 
-			if (objectGotUnlockedAfterWaiting)
+			if (objectsGotUnlockedAfterWaiting)
 			{
 				lockInfos = LockObjectsWithoutWait(requests);
 			}
