@@ -52,7 +52,7 @@
 
 			this.higherPrioLockRequestListener = higherPrioLockRequestListener ?? new HigherPriorityLockRequestListener(element);
 			this.interAppHandler = interAppHandler ?? new InterAppHandler(connection, element, logger);
-			this.unlockListener = unlockListener ?? new UnlockListener(element);
+			this.unlockListener = unlockListener ?? new UnlockListener(element, logger);
 			this.logger = logger;
 		}
 

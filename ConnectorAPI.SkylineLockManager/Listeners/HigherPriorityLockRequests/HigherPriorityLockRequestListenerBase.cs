@@ -6,8 +6,21 @@
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Messages.Locking;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 
+	/// <summary>
+	/// Provides a base class for listeners that monitor and handle lock requests with higher priority.
+	/// </summary>
+	/// <remarks>This abstract class implements the <see cref="IHigherPriorityLockRequestListener"/> interface and
+	/// provides functionality for managing subscriptions to higher-priority lock requests. It allows derived classes to
+	/// listen for and stop listening to lock requests with priorities higher than specified thresholds. The class also
+	/// raises the <see cref="HigherPriorityLockRequestReceived"/> event when a higher-priority lock request is
+	/// detected.</remarks>
 	public abstract class HigherPriorityLockRequestListenerBase : Listener, IHigherPriorityLockRequestListener
 	{
+		/// <summary>
+		/// Represents a thread-safe collection of object IDs and their associated priorities.
+		/// </summary>
+		/// <remarks>This collection is designed to allow concurrent access and modifications, ensuring thread safety
+		/// when multiple threads interact with the stored <see cref="ObjectIdAndPriority"/> instances.</remarks>
 		protected readonly ConcurrentHashSet<ObjectIdAndPriority> objectIdsAndPriorities = new ConcurrentHashSet<ObjectIdAndPriority>();
 
 		/// <inheritdoc cref="IHigherPriorityLockRequestListener.HigherPriorityLockRequestReceived"/>

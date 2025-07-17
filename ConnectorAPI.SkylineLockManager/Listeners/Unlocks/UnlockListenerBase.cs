@@ -15,6 +15,12 @@
 	/// cref="Listener.StartListening"/> and <see cref="Listener.StopListening"/> methods.</remarks>
 	public abstract class UnlockListenerBase : Listener, IUnlockListener
 	{
+		/// <summary>
+		/// A thread-safe dictionary that maps string keys to <see cref="TaskCompletionSource{TResult}"/> instances
+		/// representing asynchronous operations.
+		/// </summary>
+		/// <remarks>This dictionary is used to manage and track the completion of asynchronous tasks identified by
+		/// unique string keys. It ensures thread-safe access and modification of the task completion sources.</remarks>
 		protected readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> taskCompletionSources = new ConcurrentDictionary<string, TaskCompletionSource<bool>>();
 
 		/// <summary>

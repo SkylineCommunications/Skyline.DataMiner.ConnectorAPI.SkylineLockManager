@@ -41,6 +41,10 @@
 		private bool startingListen;
 		private bool stoppingListen;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Listener"/> class with an optional logger.
+		/// </summary>
+		/// <param name="logger">An optional <see cref="ILogger"/> instance used for logging. If null, no logging will be performed.</param>
 		protected Listener(ILogger logger = null)
 		{
 			this.logger = logger;
