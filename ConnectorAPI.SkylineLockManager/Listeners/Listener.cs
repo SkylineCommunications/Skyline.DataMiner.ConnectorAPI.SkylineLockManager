@@ -1,7 +1,9 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners
 {
 	using System;
+	using System.Diagnostics;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.Listeners.Unlocks;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
 
 	/// <summary>
 	/// Provides an abstract base class for implementing listeners that monitor specific events or conditions.
@@ -19,6 +21,7 @@
 		/// <remarks>This field is initialized with a unique value when the containing object is created.  It is
 		/// intended to uniquely identify the source within the context of the application.</remarks>
 		protected readonly string sourceId = Guid.NewGuid().ToString();
+		private readonly ILogger logger;
 
 		/// <summary>
 		/// Indicates whether the service is currently listening for incoming connections or events.
@@ -37,6 +40,11 @@
 
 		private bool startingListen;
 		private bool stoppingListen;
+
+		protected Listener(ILogger logger = null)
+		{
+			this.logger = logger;
+		}
 
 		/// <summary>
 		/// Disposes the <see cref="UnlockListener"/> instance, releasing any resources it holds.
@@ -111,6 +119,19 @@
 
 			isListening = false;
 			stoppingListen = false;
+		}
+
+		/// <summary>
+		/// Logs a message along with the name of the calling method and the current context.
+		/// </summary>
+		/// <remarks>This method captures the name of the calling method and logs it alongside the provided message.
+		/// The logging behavior depends on the implementation of the <c>logger</c> instance.</remarks>
+		/// <param name="message">The message to log. Cannot be null or empty.</param>
+		protected void Log(string message)
+		{
+			string nameOfMethod = new StackTrace().GetFrame(1).GetMethod().Name;
+
+			logger?.Log(nameof(LockManagerElement), nameOfMethod, message);
 		}
 	}
 }

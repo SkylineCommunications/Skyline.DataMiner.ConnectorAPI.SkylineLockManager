@@ -220,21 +220,27 @@
 				throw new ArgumentOutOfRangeException(nameof(maxWaitingTime), "Max waiting time must be greater than zero.");
 			}
 
-			var tasksToWaitForUnlock = unlockListener.StartListeningForUnlocks(requests.Select(r => r.ObjectId).ToList()).ToArray();
+			var objectIds = requests.Select(r => r.ObjectId).ToList();	
+
+			var tasksToWaitForUnlock = unlockListener.StartListeningForUnlocks(objectIds).ToArray();
 
 			var lockInfos = LockObjectsWithoutWait(requests);
 
 			bool allLocksAreGranted = lockInfos.All(li => li.IsGranted);
 			if (allLocksAreGranted)
 			{
-				unlockListener.StopListeningForUnlocks(requests.Select(r => r.ObjectId).ToList());
+				unlockListener.StopListeningForUnlocks(objectIds);
 
 				return lockInfos;
 			}
 
+			Log($"Start waiting until objects '{String.Join(", ", objectIds)}' are unlocked");
+
 			bool objectGotUnlockedAfterWaiting = Task.WaitAll(tasksToWaitForUnlock, maxWaitingTime);
 
-			unlockListener.StopListeningForUnlocks(requests.Select(r => r.ObjectId).ToList());
+			Log($"Finished waiting until objects '{String.Join(", ", objectIds)}' are unlocked");
+
+			unlockListener.StopListeningForUnlocks(objectIds);
 
 			if (objectGotUnlockedAfterWaiting)
 			{

@@ -14,8 +14,9 @@
 		/// Initializes a new instance of the <see cref="UnlockListener"/> class with the specified DMS element.
 		/// </summary>
 		/// <param name="element">The DMS element used to retrieve the standalone parameter. This parameter cannot be <see langword="null"/>.</param>
+		/// <param name="logger">An optional logger.</param>
 		/// <exception cref="ArgumentNullException">Thrown if <paramref name="element"/> is <see langword="null"/>.</exception>
-		public UnlockListener(IDmsElement element)
+		public UnlockListener(IDmsElement element, ILogger logger = null) : base(logger)
 		{
 			if (element == null)
 			{
@@ -28,8 +29,13 @@
 		/// <inheritdoc cref="Listener.StartMonitor()"/>
 		protected override void StartMonitor()
 		{
+			Log($"Starting monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
+
 			parameter.StartValueMonitor(sourceId, (paramValueChange) =>
 			{
+				Log($"Noticed unlocked objects '{paramValueChange.Value}'");
+				Log($"Task completion source dict keys '{String.Join(", ", taskCompletionSources.Keys)}'");
+
 				var unlockedObjectIds = paramValueChange.Value.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
 				foreach (var unlockedObjectId in unlockedObjectIds)
@@ -45,6 +51,8 @@
 		/// <inheritdoc cref="Listener.StopMonitor()"/>
 		protected override void StopMonitor()
 		{
+			Log($"Stopping monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
+
 			parameter.StopValueMonitor(sourceId);
 		}
 	}

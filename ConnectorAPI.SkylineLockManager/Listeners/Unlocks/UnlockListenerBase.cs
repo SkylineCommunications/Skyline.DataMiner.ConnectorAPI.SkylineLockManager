@@ -17,6 +17,14 @@
 	{
 		protected readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> taskCompletionSources = new ConcurrentDictionary<string, TaskCompletionSource<bool>>();
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="UnlockListenerBase"/> class with an optional logger.
+		/// </summary>
+		/// <param name="logger">An optional <see cref="ILogger"/> instance used for logging. If null, no logging will be performed.</param>
+		protected UnlockListenerBase(ILogger logger = null) : base(logger)
+		{
+		}
+
 		/// <inheritdoc cref="IUnlockListener.StartListeningForUnlock(string)"/>
 		public Task StartListeningForUnlock(string objectId)
 		{
