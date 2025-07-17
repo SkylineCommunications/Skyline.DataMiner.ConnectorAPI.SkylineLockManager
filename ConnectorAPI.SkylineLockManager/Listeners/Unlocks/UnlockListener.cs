@@ -33,11 +33,6 @@
 
 			parameter.StartValueMonitor(sourceId, (paramValueChange) =>
 			{
-				paramValueChange.Dms.CreateScript(new AutomationScriptConfiguration("VSC_Test_Success", "VSC"));
-
-				Log($"Noticed unlocked objects '{paramValueChange.Value}'");
-				Log($"Task completion source dict keys '{String.Join(", ", taskCompletionSources.Keys)}'");
-
 				var unlockedObjectIds = paramValueChange.Value.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
 				foreach (var unlockedObjectId in unlockedObjectIds)
