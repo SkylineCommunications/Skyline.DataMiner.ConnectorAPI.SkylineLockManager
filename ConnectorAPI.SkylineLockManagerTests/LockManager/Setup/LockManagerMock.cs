@@ -10,11 +10,12 @@
 	{
 		public LockManagerMock(IDictionary<string, LockedObject>? lockedObjects = null) : base(lockedObjects)
 		{
+
 		}
 
-		public event EventHandler<string[]> ObjectsUnlocked;
+		public event EventHandler<string[]>? ObjectsUnlocked;
 
-		public event EventHandler<LockObjectRequestEventArgs> HigherPriorityLockRequestReceived;
+		public event EventHandler<LockObjectRequestEventArgs>? HigherPriorityLockRequestReceived;
 
 		public void InvokeObjectsUnlocked(string[] objectIds)
 		{

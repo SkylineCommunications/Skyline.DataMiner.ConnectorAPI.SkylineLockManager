@@ -3,23 +3,34 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Security.Authentication;
-	using System.Text;
-	using System.Threading.Tasks;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
 	using Skyline.DataMiner.Net.Helper;
 
+	/// <inheritdoc cref="ILockManager"/>
 	public class LockManager : ILockManager
 	{
+		/// <summary>
+		/// Represents a collection of objects that are locked, keyed by their unique identifiers.
+		/// </summary>
+		/// <remarks>This dictionary is used to manage and track objects that are currently locked.  The keys are
+		/// strings representing unique identifiers, and the values are instances of <see cref="LockedObject"/>.</remarks>
 		protected readonly IDictionary<string, LockedObject> lockedObjects;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="LockManager"/> class, optionally with a predefined set of locked
+		/// objects.
+		/// </summary>
+		/// <param name="lockedObjects">An optional dictionary containing the initial set of locked objects, where the key is the object identifier and
+		/// the value is the corresponding <see cref="LockedObject"/>. If null, an empty dictionary is used.</param>
 		public LockManager(IDictionary<string, LockedObject> lockedObjects = null)
 		{
 			this.lockedObjects = lockedObjects ?? new Dictionary<string, LockedObject>();
 		}
 
+		/// <inheritdoc cref="ILockManager.DefaultAutoLockReleaseTimeSpan"/>
 		public TimeSpan DefaultAutoLockReleaseTimeSpan { get; protected set; } = TimeSpan.FromHours(1);
 
+		/// <inheritdoc cref="ILockManager.UnlockExpiredObjects"/>
 		public void UnlockExpiredObjects()
 		{
 			var now = DateTime.Now;
@@ -32,6 +43,7 @@
 			}
 		}
 
+		/// <inheritdoc cref="ILockManager.RequestLock(LockObjectRequest)"/>
 		public IEnumerable<LockObjectResponse> RequestLock(LockObjectRequest lockObjectRequest)
 		{
 			SetAutoUnlockTimeSpan(lockObjectRequest);
@@ -52,6 +64,7 @@
 			return lockObjectResponses;
 		}
 
+		/// <inheritdoc cref="ILockManager.UnlockAllObjects"/>
 		public ICollection<string> UnlockAllObjects()
 		{
 			var allUnlockedObjects = lockedObjects.Keys.ToList();
@@ -61,6 +74,7 @@
 			return allUnlockedObjects;
 		}
 
+		/// <inheritdoc cref="ILockManager.UnlockObject(string, bool)"/>
 		public ICollection<string> UnlockObject(string objectId, bool unlockLinkedObjects)
 		{
 			var allUnlockedObjectIds = new List<string>();

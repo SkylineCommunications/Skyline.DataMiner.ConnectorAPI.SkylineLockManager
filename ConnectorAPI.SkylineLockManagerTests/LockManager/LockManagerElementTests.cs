@@ -8,6 +8,7 @@
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Unlocking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.LockManager.Setup;
+	using LockManager = LockManager;
 
 	[TestClass()]
 	public class LockManagerElementTests

@@ -32,6 +32,7 @@
 
 		private TimeSpan Timeout => timeout.Value;
 
+		/// <inheritdoc cref="IInterAppHandler.SendLockObjectsRequestsMessage(LockObjectsRequestsMessage)"/>
 		public LockObjectsResponsesMessage SendLockObjectsRequestsMessage(LockObjectsRequestsMessage message)
 		{
 			if (message == null)
@@ -48,6 +49,7 @@
 			return response;
 		}
 
+		/// <inheritdoc cref="IInterAppHandler.SendUnlockObjectsRequestsMessage(UnlockObjectsRequestsMessage)"/>
 		public void SendUnlockObjectsRequestsMessage(UnlockObjectsRequestsMessage message)
 		{
 			if (message == null)
@@ -62,7 +64,6 @@
 			Log($"Sent {nameof(UnlockObjectsRequestsMessage)} successfully.");
 		}
 
-		/// <inheritdoc cref="IInterAppHandler.SendMessageWithoutResponse(Message)"/>
 		private void SendMessageWithoutResponse(Message message)
 		{
 			var commands = InterAppCallFactory.CreateNew();
@@ -71,7 +72,6 @@
 			commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, SkylineLockManagerConnectorApi.InterAppKnownTypes);
 		}
 
-		/// <inheritdoc cref="IInterAppHandler.SendMessageWithResponse{T}(Message)"/>
 		private T SendMessageWithResponse<T>(Message message) where T : Message
 		{
 			var commands = InterAppCallFactory.CreateNew();
