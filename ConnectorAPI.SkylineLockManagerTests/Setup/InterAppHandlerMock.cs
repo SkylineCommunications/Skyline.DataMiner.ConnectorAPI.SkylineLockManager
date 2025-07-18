@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.LockManager.Setup
+﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup
 {
 	using System;
 	using System.Linq;

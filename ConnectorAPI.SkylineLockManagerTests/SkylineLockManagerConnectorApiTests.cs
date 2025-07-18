@@ -1,4 +1,6 @@
-﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager.Tests
+﻿using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
+
+namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 {
 	using System.Threading.Tasks;
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -7,11 +9,10 @@
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Unlocking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.LockManager.Setup;
-	using LockManager = LockManager;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup;
 
 	[TestClass()]
-	public class LockManagerElementTests
+	public class SkylineLockManagerConnectorApiTests
 	{
 		[TestMethod()]
 		public void ListenForHigherPriorityLockRequests_HigherPrioLockRequestCameIn()
