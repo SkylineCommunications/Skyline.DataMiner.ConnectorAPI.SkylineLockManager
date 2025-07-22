@@ -34,7 +34,7 @@
 		}
 
 		/// <inheritdoc cref="IUnlockListener.StartListeningForUnlock(string)"/>
-		public Task StartListeningForUnlock(string objectId)
+		public Task<bool> StartListeningForUnlock(string objectId)
 		{
 			var unlockTaskCompletionSource = taskCompletionSources.GetOrAdd(objectId, _ => new TaskCompletionSource<bool>());
 
@@ -47,9 +47,9 @@
 		}
 
 		/// <inheritdoc cref="IUnlockListener.StartListeningForUnlocks(ICollection{string})"/>
-		public ICollection<Task> StartListeningForUnlocks(ICollection<string> objectIds)
+		public ICollection<Task<bool>> StartListeningForUnlocks(ICollection<string> objectIds)
 		{
-			var tasks = new List<Task>();
+			var tasks = new List<Task<bool>>();
 
 			foreach (var objectId in objectIds)
 			{
@@ -65,7 +65,7 @@
 			if (taskCompletionSources.TryRemove(objectId, out var taskCompletionSource))
 			{
 				// Make sure the task listening to this TaskCompletionSource is canceled.
-				taskCompletionSource.TrySetCanceled();
+				taskCompletionSource.TrySetResult(result: false);
 			}
 
 			if (taskCompletionSources.IsEmpty && isListening)
@@ -98,7 +98,7 @@
 				if (taskCompletionSources.TryRemove(unlockedObjectId, out var taskCompletionSource))
 				{
 					// Remove the TaskCompletionSource from the dictionary when it is finished. This allows for new entries for the same objectId to be created later.
-					taskCompletionSource.SetResult(true);
+					taskCompletionSource.SetResult(result: true);
 				}
 			}
 		}

@@ -278,7 +278,7 @@
 				var remainingWaitingTime = maxWaitingTime - totalWaitingTime;
 				var stopwatch = Stopwatch.StartNew();
 
-				bool objectsGotUnlockedAfterWaiting = Task.WaitAll(tasksToWaitForUnlock, remainingWaitingTime);
+				bool objectsGotUnlockedAfterWaiting = Task.WaitAll(tasksToWaitForUnlock, remainingWaitingTime) && tasksToWaitForUnlock.All(t => t.Result);
 
 				stopwatch.Stop();
 				totalWaitingTime += stopwatch.Elapsed;

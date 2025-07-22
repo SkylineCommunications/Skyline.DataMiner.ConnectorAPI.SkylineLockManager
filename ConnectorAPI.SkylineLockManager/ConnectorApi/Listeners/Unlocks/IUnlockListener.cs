@@ -12,12 +12,12 @@
 		/// <summary>
 		/// Start listening for unlock events for a specific object ID.
 		/// </summary>
-		Task StartListeningForUnlock(string objectId);
+		Task<bool> StartListeningForUnlock(string objectId);
 
 		/// <summary>
 		/// Start listening for unlock events for specific object IDs.
 		/// </summary>
-		ICollection<Task> StartListeningForUnlocks(ICollection<string> objectIds);
+		ICollection<Task<bool>> StartListeningForUnlocks(ICollection<string> objectIds);
 
 		/// <summary>
 		/// Stop listening for unlock events for a specific object ID.
