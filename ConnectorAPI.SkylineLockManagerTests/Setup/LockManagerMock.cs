@@ -8,10 +8,14 @@
 
 	public class LockManagerMock : LockManager
 	{
+		private List<LockObjectRequest> receivedLockObjectRequests = new List<LockObjectRequest>();
+
 		public LockManagerMock(IDictionary<string, LockedObject>? lockedObjects = null) : base(lockedObjects)
 		{
 
 		}
+
+		public IReadOnlyCollection<LockObjectRequest> ReceivedLockObjectRequests => receivedLockObjectRequests;
 
 		public event EventHandler<string[]>? ObjectsUnlocked;
 
@@ -30,6 +34,8 @@
 		public override LockObjectResponse RequestLock(LockObjectRequest lockObjectRequest)
 		{
 			var result = base.RequestLock(lockObjectRequest);
+
+			receivedLockObjectRequests.Add(lockObjectRequest);
 
 			InvokeHigherPriorityLockRequestReceived(lockObjectRequest);
 

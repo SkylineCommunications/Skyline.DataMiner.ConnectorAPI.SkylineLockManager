@@ -125,7 +125,7 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 				ObjectId = "objectId",
 			};
 
-			lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime: TimeSpan.FromSeconds(10));
+			lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime: TimeSpan.FromSeconds(2));
 
 			// Assert
 			Assert.AreEqual(1, unlockListenerMock.AmountOfTimesMonitorStarted);
@@ -177,6 +177,8 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 
 			var lockInfoFromContextThatGotTheLock = new[] {lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD}
 				.Where(x => x.LockInfosPerObjectId.ContainsKey("objectId") && x.LockInfosPerObjectId["objectId"].IsGranted);
+
+			Assert.AreEqual(1 /*Context A*/ + 3 /*Initial attempt from contexts B,C,D*/ + 3/*Second attempt from contexts B,C,D*/, lockManagerMock.ReceivedLockObjectRequests.Count);
 
 			Assert.AreEqual(1, lockInfoFromContextThatGotTheLock.Count(), "Only one context should have gotten the lock.");
 			Assert.AreEqual(2, lockInfoFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 0.1 /* Accurate up to 100 milliseconds */);
