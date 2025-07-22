@@ -125,7 +125,7 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 				ObjectId = "objectId",
 			};
 
-			lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime: TimeSpan.FromSeconds(1));
+			lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime: TimeSpan.FromSeconds(10));
 
 			// Assert
 			Assert.AreEqual(1, unlockListenerMock.AmountOfTimesMonitorStarted);

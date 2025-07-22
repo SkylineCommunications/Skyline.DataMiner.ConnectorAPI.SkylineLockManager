@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi
 {
 	using System;
+	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
@@ -263,43 +264,83 @@
 				throw new ArgumentOutOfRangeException(nameof(maxWaitingTime), "Max waiting time must be greater than zero.");
 			}
 
-			var lockObjectResponses = SendLockObjectRequests(requests);
+			var initialLockObjectResponses = SendLockObjectRequests(requests);
 
-			var objectIdsForNonAvailableLocks = lockObjectResponses.SelectMany(response => response.Flatten()).Where(response => !response.LockIsAvailable).Select(response => response.ObjectId).ToList();
+			var mostRecentResponsePerRequest = new ConcurrentDictionary<LockObjectRequest, LockObjectResponse>();
 
-			totalWaitingTime = TimeSpan.Zero;
-
-			while (objectIdsForNonAvailableLocks.Count > 0 && totalWaitingTime < maxWaitingTime)
+			foreach (var response in initialLockObjectResponses)
 			{
-				var tasksToWaitForUnlock = unlockListener.StartListeningForUnlocks(objectIdsForNonAvailableLocks).ToArray();
+				var request = requests.Single(req => req.ObjectId == response.ObjectId);
 
-				Log($"Start waiting until objects '{String.Join(", ", objectIdsForNonAvailableLocks)}' are unlocked");
-
-				var remainingWaitingTime = maxWaitingTime - totalWaitingTime;
-				var stopwatch = Stopwatch.StartNew();
-
-				bool objectsGotUnlockedAfterWaiting = Task.WaitAll(tasksToWaitForUnlock, remainingWaitingTime) && tasksToWaitForUnlock.All(t => t.Result);
-
-				stopwatch.Stop();
-				totalWaitingTime += stopwatch.Elapsed;
-
-				if (objectsGotUnlockedAfterWaiting)
-				{
-					Log($"Finished waiting until objects '{String.Join(", ", objectIdsForNonAvailableLocks)}' are unlocked, took {stopwatch.Elapsed}");
-
-					lockObjectResponses = SendLockObjectRequests(requests);
-					objectIdsForNonAvailableLocks = lockObjectResponses.SelectMany(response => response.Flatten()).Where(response => !response.LockIsAvailable).Select(response => response.ObjectId).ToList();
-				}
-				else
-				{
-					Log($"Timed-out while waiting until objects '{String.Join(", ", objectIdsForNonAvailableLocks)}' are unlocked.");
-					break;
-				}
+				mostRecentResponsePerRequest[request] = response;
 			}
 
-			unlockListener.StopListeningForUnlocks(objectIdsForNonAvailableLocks);
+			var tasksToWaitForUnlockPerRequest = new Dictionary<LockObjectRequest, Task>();
 
-			return lockObjectResponses;
+			var timeoutTimestamp = DateTime.Now + maxWaitingTime;
+
+			var notGrantedRequests = mostRecentResponsePerRequest.Where(kvp => !kvp.Value.LockIsGranted).ToList();
+
+			var stopwatch = Stopwatch.StartNew();
+
+			foreach (var kvp in notGrantedRequests)
+			{
+				var taskToWait = Task.Run<bool>(() =>
+				{
+					var lockObjectRequest = kvp.Key;
+
+					var allObjectIdsToWhichWeAreListening = new HashSet<string>();
+
+					var notAvailableObjectIds = kvp.Value.Flatten().Where(response => !response.LockIsAvailable).Select(response => response.ObjectId).ToList();
+
+					while(notAvailableObjectIds.Count > 0 && DateTime.Now < timeoutTimestamp)
+					{
+						var tasksToWaitForObjectUnlocks = unlockListener.StartListeningForUnlocks(notAvailableObjectIds);
+						allObjectIdsToWhichWeAreListening.UnionWith(notAvailableObjectIds);
+
+						bool objectsGotUnlocked = Task.WaitAll(tasksToWaitForObjectUnlocks.Values.ToArray(), maxWaitingTime) && tasksToWaitForObjectUnlocks.Values.All(t => t.Result);
+
+						if (objectsGotUnlocked)
+						{
+							mostRecentResponsePerRequest[lockObjectRequest] = SendLockObjectRequest(lockObjectRequest);
+
+							if (mostRecentResponsePerRequest[lockObjectRequest].LockIsGranted)
+							{
+								unlockListener.StopListeningForUnlocks(allObjectIdsToWhichWeAreListening);
+								return true;
+							}
+							else
+							{
+								notAvailableObjectIds = kvp.Value.Flatten().Where(response => !response.LockIsAvailable).Select(response => response.ObjectId).ToList();
+							}
+						}
+						else
+						{
+							unlockListener.StopListeningForUnlocks(allObjectIdsToWhichWeAreListening);
+							return false;
+						}
+					}
+
+					unlockListener.StopListeningForUnlocks(allObjectIdsToWhichWeAreListening);
+					return !notAvailableObjectIds.Any();
+				});
+
+				tasksToWaitForUnlockPerRequest[kvp.Key] = taskToWait;
+			}
+				
+			Task.WaitAll(tasksToWaitForUnlockPerRequest.Values.ToArray(), maxWaitingTime);
+
+			stopwatch.Stop();
+			totalWaitingTime = stopwatch.Elapsed;
+
+			return mostRecentResponsePerRequest.Select(kvp => kvp.Value).ToList();
+		}
+
+		private LockObjectResponse SendLockObjectRequest(LockObjectRequest request)
+		{
+			if (request == null) throw new ArgumentNullException(nameof(request));
+
+			return SendLockObjectRequests(new[] { request }).Single();
 		}
 
 		private List<LockObjectResponse> SendLockObjectRequests(IEnumerable<LockObjectRequest> requests)

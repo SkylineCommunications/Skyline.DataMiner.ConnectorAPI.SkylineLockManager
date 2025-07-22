@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks
 {
 	using System;
-	using System.Collections.Generic;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;

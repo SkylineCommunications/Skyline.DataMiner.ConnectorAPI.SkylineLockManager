@@ -17,7 +17,7 @@
 		/// <summary>
 		/// Start listening for unlock events for specific object IDs.
 		/// </summary>
-		ICollection<Task<bool>> StartListeningForUnlocks(ICollection<string> objectIds);
+		IReadOnlyDictionary<string, Task<bool>> StartListeningForUnlocks(ICollection<string> objectIds);
 
 		/// <summary>
 		/// Stop listening for unlock events for a specific object ID.

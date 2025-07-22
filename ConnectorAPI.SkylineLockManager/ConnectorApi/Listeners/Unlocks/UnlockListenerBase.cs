@@ -47,13 +47,13 @@
 		}
 
 		/// <inheritdoc cref="IUnlockListener.StartListeningForUnlocks(ICollection{string})"/>
-		public ICollection<Task<bool>> StartListeningForUnlocks(ICollection<string> objectIds)
+		public IReadOnlyDictionary<string, Task<bool>> StartListeningForUnlocks(ICollection<string> objectIds)
 		{
-			var tasks = new List<Task<bool>>();
+			var tasks = new Dictionary<string, Task<bool>>();
 
 			foreach (var objectId in objectIds)
 			{
-				tasks.Add(StartListeningForUnlock(objectId));
+				tasks.Add(objectId, StartListeningForUnlock(objectId));
 			}
 
 			return tasks;
@@ -64,7 +64,7 @@
 		{
 			if (taskCompletionSources.TryRemove(objectId, out var taskCompletionSource))
 			{
-				// Make sure the task listening to this TaskCompletionSource is canceled.
+				// Make sure the task listening to this TaskCompletionSource is completed.
 				taskCompletionSource.TrySetResult(result: false);
 			}
 
@@ -100,6 +100,11 @@
 					// Remove the TaskCompletionSource from the dictionary when it is finished. This allows for new entries for the same objectId to be created later.
 					taskCompletionSource.SetResult(result: true);
 				}
+			}
+
+			if (taskCompletionSources.IsEmpty && isListening)
+			{
+				StopListening();
 			}
 		}
 
