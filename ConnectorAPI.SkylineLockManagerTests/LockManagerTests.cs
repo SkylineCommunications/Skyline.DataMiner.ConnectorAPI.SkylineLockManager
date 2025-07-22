@@ -5,12 +5,10 @@
 	using System.Linq;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup;
 
 	[TestClass]
 	public class LockManagerTests
 	{
-
 		[TestMethod]
 		public void UnlockExpiredObjects_UnlockedExpiredObject()
 		{
@@ -56,7 +54,7 @@
 			string objectId = Guid.NewGuid().ToString();
 
 			// Act
-			var results = lockManager.RequestLock(
+			var result = lockManager.RequestLock(
 				new LockObjectRequest
 				{
 					ObjectId = objectId,
@@ -67,14 +65,15 @@
 				});
 
 			// Assert
-			Assert.AreEqual(1, results.Count());
-			Assert.IsTrue(results.Single().LockIsGranted);
-			Assert.AreEqual(objectId, results.Single().ObjectId);
-			Assert.AreEqual("unit test", results.Single().LockHolderInfo);
+			Assert.AreEqual(1, result.Flatten().Count());
+			Assert.IsTrue(result.Flatten().Single().LockIsGranted);
+			Assert.IsTrue(result.Flatten().Single().LockIsAvailable);
+			Assert.AreEqual(objectId, result.Flatten().Single().ObjectId);
+			Assert.AreEqual("unit test", result.Flatten().Single().LockHolderInfo);
 		}
 
 		[TestMethod]
-		public void RequestMultipleLocks_Granted()
+		public void RequestLayeredLock_Granted()
 		{
 			// Arrange
 			var lockManager = new LockManager();
@@ -84,7 +83,7 @@
 			string secondLinkedobjectId = Guid.NewGuid().ToString();
 
 			// Act
-			var results = lockManager.RequestLock(
+			var result = lockManager.RequestLock(
 				new LockObjectRequest
 				{
 					ObjectId = objectId,
@@ -113,8 +112,9 @@
 				});
 
 			// Assert
-			Assert.AreEqual(3, results.Count());
-			Assert.IsTrue(results.All(r => r.LockIsGranted));
+			Assert.AreEqual(3, result.Flatten().Count());
+			Assert.IsTrue(result.Flatten().All(r => r.LockIsGranted));
+			Assert.IsTrue(result.Flatten().All(r => r.LockIsAvailable));
 		}
 
 		[TestMethod]
@@ -140,7 +140,7 @@
 			var lockManager = new LockManager(lockedObjects);
 
 			// Act
-			var results = lockManager.RequestLock(new LockObjectRequest
+			var result = lockManager.RequestLock(new LockObjectRequest
 			{
 				ObjectId = objectId,
 				ObjectDescription = "object description",
@@ -150,14 +150,15 @@
 			});
 
 			// Assert
-			Assert.AreEqual(1, results.Count());
-			Assert.IsFalse(results.Single().LockIsGranted);
-			Assert.AreEqual(objectId, results.Single().ObjectId);
-			Assert.AreEqual("first requester", results.Single().LockHolderInfo);
+			Assert.AreEqual(1, result.Flatten().Count());
+			Assert.IsFalse(result.Flatten().Single().LockIsGranted);
+			Assert.IsFalse(result.Flatten().Single().LockIsAvailable);
+			Assert.AreEqual(objectId, result.Flatten().Single().ObjectId);
+			Assert.AreEqual("first requester", result.Flatten().Single().LockHolderInfo);
 		}
 
 		[TestMethod]
-		public void RequestMultipleLocks_NotGranted()
+		public void RequestLayeredLock_NotGranted()
 		{
 			// Arrange
 			string objectId = Guid.NewGuid().ToString();
@@ -181,7 +182,7 @@
 			var lockManager = new LockManager(lockedObjects);
 
 			// Act
-			var results = lockManager.RequestLock(
+			var result = lockManager.RequestLock(
 				new LockObjectRequest
 				{
 					ObjectId = objectId,
@@ -210,8 +211,17 @@
 				});
 
 			// Assert
-			Assert.AreEqual(3, results.Count());
-			Assert.IsTrue(results.All(r => !r.LockIsGranted));
+			Assert.AreEqual(3, result.Flatten().Count());
+			Assert.IsTrue(result.Flatten().All(r => !r.LockIsGranted));
+
+			var responseForMainObject = result.Flatten().First(r => r.ObjectId == objectId);
+			Assert.IsTrue(responseForMainObject.LockIsAvailable);
+
+			var responseForFirstLinkedObject = result.Flatten().First(r => r.ObjectId == firstLinkedobjectId);
+			Assert.IsFalse(responseForFirstLinkedObject.LockIsAvailable);
+
+			var responseForSecondLinkedObject = result.Flatten().First(r => r.ObjectId == secondLinkedobjectId);
+			Assert.IsTrue(responseForSecondLinkedObject.LockIsAvailable);
 		}
 	}
 }

@@ -95,8 +95,9 @@
 		{
 			foreach (var unlockedObjectId in unlockedObjectIds)
 			{
-				if (taskCompletionSources.TryGetValue(unlockedObjectId, out var taskCompletionSource))
+				if (taskCompletionSources.TryRemove(unlockedObjectId, out var taskCompletionSource))
 				{
+					// Remove the TaskCompletionSource from the dictionary when it is finished. This allows for new entries for the same objectId to be created later.
 					taskCompletionSource.SetResult(true);
 				}
 			}

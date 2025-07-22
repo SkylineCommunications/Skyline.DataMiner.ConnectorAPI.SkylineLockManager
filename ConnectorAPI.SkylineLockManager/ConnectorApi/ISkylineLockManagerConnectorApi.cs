@@ -25,7 +25,7 @@
 		/// <param name="request">Represents the requests to lock object.</param>
 		/// <param name="maxWaitingTime">Optional timespan to wait until lock gets granted.</param>
 		/// <returns>A <see cref="ILockInfo"/> object, containing info about the obtained lock.</returns>
-		ILockObjectResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null);
+		ILockObjectsResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null);
 
 		/// <summary>
 		/// Attempts to lock the given objects.

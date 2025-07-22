@@ -23,7 +23,7 @@
 				throw new ArgumentNullException(nameof(message));
 			}
 
-			var responses = message.Requests.SelectMany(req => lockManager.RequestLock(req));
+			var responses = message.Requests.Select(req => lockManager.RequestLock(req));
 
 			return new LockObjectsResponsesMessage { Responses = responses.ToList() };
 		}

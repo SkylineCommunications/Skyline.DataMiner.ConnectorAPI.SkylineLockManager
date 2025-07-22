@@ -133,7 +133,7 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 		}
 
 		[TestMethod()]
-		public async Task MultipleContextsWaitingForSameLock_AllContextsWaitForMaxWaitingTime()
+		public void MultipleContextsWaitingForSameLock_AllContextsWaitForMaxWaitingTime()
 		{
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
@@ -163,7 +163,7 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 			// Context A does some stuff while context B, C and D are waiting
 			Task.Delay(TimeSpan.FromSeconds(2)).Wait();
 
-			// Context A unlocks the service
+			// Context A unlocks the object
 			lockManagerConnectorApi.UnlockObject(new UnlockObjectRequest
 			{
 				ObjectId = "objectId",
@@ -175,9 +175,74 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 			var lockObjectResultFromContextC = taskToLockServiceFromContextC.Result;
 			var lockObjectResultFromContextD = taskToLockServiceFromContextD.Result;
 
-			Assert.AreEqual(maxWaitingTime.TotalMilliseconds, lockObjectResultFromContextB.TotalWaitingTime.TotalMilliseconds, 20 /* Accurate up to 20 milliseconds */);
-			Assert.AreEqual(maxWaitingTime.TotalMilliseconds, lockObjectResultFromContextC.TotalWaitingTime.TotalMilliseconds, 20 /* Accurate up to 20 milliseconds */);
-			Assert.AreEqual(maxWaitingTime.TotalMilliseconds, lockObjectResultFromContextD.TotalWaitingTime.TotalMilliseconds, 20 /* Accurate up to 20 milliseconds */);
+			var lockInfoFromContextThatGotTheLock = new[] {lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD}
+				.Where(x => x.LockInfosPerObjectId.ContainsKey("objectId") && x.LockInfosPerObjectId["objectId"].IsGranted);
+
+			Assert.AreEqual(1, lockInfoFromContextThatGotTheLock.Count(), "Only one context should have gotten the lock.");
+			Assert.AreEqual(2, lockInfoFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 0.1 /* Accurate up to 100 milliseconds */);
+
+			var lockInfoFromContextsThatDidNotGetTheLock = new[] {lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD}
+				.Where(x => x.LockInfosPerObjectId.ContainsKey("objectId") && !x.LockInfosPerObjectId["objectId"].IsGranted);
+
+			Assert.AreEqual(2, lockInfoFromContextsThatDidNotGetTheLock.Count(), "Two contexts should not have gotten the lock.");
+
+			Assert.AreEqual(maxWaitingTime.TotalMilliseconds, lockInfoFromContextsThatDidNotGetTheLock.First().TotalWaitingTime.TotalMilliseconds, 20 /* Accurate up to 20 milliseconds */);
+			Assert.AreEqual(maxWaitingTime.TotalMilliseconds, lockInfoFromContextsThatDidNotGetTheLock.Last().TotalWaitingTime.TotalMilliseconds, 20 /* Accurate up to 20 milliseconds */);
+		}
+
+		[TestMethod()]
+		public void WaitForLock_WhileLinkedObjectIsLocked()
+		{
+			// Arrange
+			var lockManagerMock = new LockManagerMock();
+
+			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
+
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+
+			// Act
+			var lockLinkedObjectRequest = new LockObjectRequest
+			{
+				ObjectId = "linkedObjectId",
+			};
+
+			var lockObjectRequest = new LockObjectRequest
+			{
+				ObjectId = "objectId",
+				LinkedObjectRequests = new List<LockObjectRequest>
+				{
+					lockLinkedObjectRequest,
+				}
+			};
+
+			// Context A locks the linked object
+			lockManagerConnectorApi.LockObject(lockLinkedObjectRequest);
+
+			// Contexts B tries to lock an object with the linked object with a wait
+			var taskToLockServiceFromContextB = Task.Run(() => lockManagerConnectorApi.LockObject(lockObjectRequest, TimeSpan.FromSeconds(10)));
+
+			// Context A does some stuff while context B is waiting
+			Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+
+			// Context A unlocks the linked object
+			lockManagerConnectorApi.UnlockObject(new UnlockObjectRequest
+			{
+				ObjectId = "linkedObjectId",
+			});
+
+			// Context B finishes waiting for the lock
+			taskToLockServiceFromContextB.Wait();
+			var lockObjectsResultFromContextB = taskToLockServiceFromContextB.Result;
+
+			// Assert
+			Assert.AreEqual(2, lockObjectsResultFromContextB.LockInfosPerObjectId.Keys.Count());
+			Assert.IsTrue(lockObjectsResultFromContextB.LockInfosPerObjectId.ContainsKey("objectId"));
+			Assert.IsTrue(lockObjectsResultFromContextB.LockInfosPerObjectId.ContainsKey("linkedObjectId"));
+
+			Assert.IsTrue(lockObjectsResultFromContextB.LockInfosPerObjectId["objectId"].IsGranted);
+			Assert.IsTrue(lockObjectsResultFromContextB.LockInfosPerObjectId["linkedObjectId"].IsGranted);
 		}
 	}
 }

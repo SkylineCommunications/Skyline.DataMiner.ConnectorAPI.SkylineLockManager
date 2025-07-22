@@ -45,5 +45,31 @@
 		/// </summary>
 		[JsonProperty("Priority")]
 		public Priority Priority { get; set; } = Priority.Medium;
+
+		/// <summary>
+		/// Flattens the current request and its linked object requests into a single enumerable sequence.
+		/// </summary>
+		/// <remarks>This method returns the current request followed by all objects in the hierarchy of linked
+		/// requests, traversing recursively through the <see cref="LinkedObjectRequests"/> collection. If there are no
+		/// linked requests, only the current object is returned.</remarks>
+		/// <returns>An <see cref="IEnumerable{T}"/> of <see cref="LockObjectRequest"/> objects, including the current object and all
+		/// linked requests in a flattened structure.</returns>
+		public IEnumerable<LockObjectRequest> Flatten()
+		{
+			yield return this;
+
+			if (LinkedObjectRequests == null || LinkedObjectRequests.Count == 0)
+			{
+				yield break;
+			}
+
+			foreach (var linkedResponse in LinkedObjectRequests)
+			{
+				foreach (var response in linkedResponse.Flatten())
+				{
+					yield return response;
+				}
+			}
+		}
 	}
 }

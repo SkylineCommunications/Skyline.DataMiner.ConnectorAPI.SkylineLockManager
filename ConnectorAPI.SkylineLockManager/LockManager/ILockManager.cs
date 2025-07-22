@@ -21,7 +21,7 @@
 		/// <returns>
 		/// An enumerable collection of <see cref="LockObjectResponse"/> objects representing the result of the lock request.
 		/// </returns>
-		IEnumerable<LockObjectResponse> RequestLock(LockObjectRequest lockObjectRequest);
+		LockObjectResponse RequestLock(LockObjectRequest lockObjectRequest);
 
 		/// <summary>
 		/// Unlocks all currently locked objects.

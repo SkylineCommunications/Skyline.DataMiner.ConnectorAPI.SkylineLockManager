@@ -25,24 +25,6 @@
 		public TimeSpan TotalWaitingTime { get; }
 
 		/// <summary>
-		/// Gets the lock result for a single object by its ID.
-		/// </summary>
-		/// <param name="objectId">The ID of the object to retrieve lock information for.</param>
-		/// <returns>A <see cref="LockObjectResult"/> containing the lock information and waiting time for the specified object.</returns>
-		/// <exception cref="KeyNotFoundException">Thrown when no lock information is found for the specified object ID.</exception>
-		internal LockObjectResult GetSingleResult(string objectId)
-		{
-			if (LockInfosPerObjectId.TryGetValue(objectId, out var lockInfo))
-			{
-				return new LockObjectResult(lockInfo, TotalWaitingTime);
-			}
-			else
-			{
-				throw new KeyNotFoundException($"No lock information found for object ID '{objectId}'.");
-			}
-		}
-
-		/// <summary>
 		/// Creates an empty <see cref="LockObjectsResult"/> instance.
 		/// </summary>
 		/// <returns>An empty <see cref="LockObjectsResult"/>.</returns>

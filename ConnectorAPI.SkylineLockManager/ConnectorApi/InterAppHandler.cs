@@ -40,11 +40,7 @@
 				throw new ArgumentNullException(nameof(message));
 			}
 
-			Log($"Sending {nameof(LockObjectsRequestsMessage)}: {JsonConvert.SerializeObject(message)}");
-
 			var response = SendMessageWithResponse<LockObjectsResponsesMessage>(message);
-
-			Log($"Received {nameof(LockObjectsResponsesMessage)}: {JsonConvert.SerializeObject(response)}");
 
 			return response;
 		}
@@ -57,17 +53,15 @@
 				throw new ArgumentNullException(nameof(message));
 			}
 
-			Log($"Sending {nameof(UnlockObjectsRequestsMessage)}: {JsonConvert.SerializeObject(message)}");
-
 			SendMessageWithoutResponse(message);
-
-			Log($"Sent {nameof(UnlockObjectsRequestsMessage)} successfully.");
 		}
 
 		private void SendMessageWithoutResponse(Message message)
 		{
 			var commands = InterAppCallFactory.CreateNew();
 			commands.Messages.Add(message);
+
+			Log($"Sending message: {JsonConvert.SerializeObject(message)}");
 
 			commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, SkylineLockManagerConnectorApi.InterAppKnownTypes);
 		}
@@ -77,11 +71,11 @@
 			var commands = InterAppCallFactory.CreateNew();
 			commands.Messages.Add(message);
 
-			Log($"Message: {JsonConvert.SerializeObject(message)}");
+			Log($"Sending message: {JsonConvert.SerializeObject(message)}");
 
 			var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, SkylineLockManagerConnectorApi.InterAppKnownTypes).First();
 
-			Log($"Response: {JsonConvert.SerializeObject(response)}");
+			Log($"Received response: {JsonConvert.SerializeObject(response)}");
 
 			if (response is FailureMessage failureResponse)
 			{

@@ -26,5 +26,32 @@
 		{
 			HigherPriorityLockRequestReceived?.Invoke(this, new LockObjectRequestEventArgs(lockObjectRequest));
 		}
+
+		public override LockObjectResponse RequestLock(LockObjectRequest lockObjectRequest)
+		{
+			var result = base.RequestLock(lockObjectRequest);
+
+			InvokeHigherPriorityLockRequestReceived(lockObjectRequest);
+
+			return result;
+		}
+
+		public override ICollection<string> UnlockAllObjects()
+		{
+			var unlockedObjectIds = base.UnlockAllObjects();
+
+			InvokeObjectsUnlocked(unlockedObjectIds.ToArray());
+
+			return unlockedObjectIds;
+		}
+
+		public override ICollection<string> UnlockObject(string objectId, bool unlockLinkedObjects)
+		{
+			var unlockedObjectIds = base.UnlockObject(objectId, unlockLinkedObjects);
+
+			InvokeObjectsUnlocked(unlockedObjectIds.ToArray());
+
+			return unlockedObjectIds;
+		}
 	}
 }

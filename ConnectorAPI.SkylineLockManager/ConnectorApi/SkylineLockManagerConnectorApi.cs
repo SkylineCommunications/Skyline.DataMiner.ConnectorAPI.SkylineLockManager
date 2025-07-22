@@ -143,14 +143,14 @@
 
 		/// <inheritdoc cref="ISkylineLockManagerConnectorApi.LockObject(LockObjectRequest, TimeSpan?)"/>
 		/// <exception cref="ArgumentNullException"/>
-		public ILockObjectResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null)
+		public ILockObjectsResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null)
 		{
 			if (request == null)
 			{
 				throw new ArgumentNullException(nameof(request));
 			}
 
-			return LockObjectsInternal(new[] { request }, maxWaitingTime).GetSingleResult(request.ObjectId);
+			return LockObjectsInternal(new[] { request }, maxWaitingTime);
 		}
 
 		/// <inheritdoc cref="ISkylineLockManagerConnectorApi.LockObjects(IEnumerable{LockObjectRequest}, TimeSpan?)"/>
@@ -228,21 +228,30 @@
 				return LockObjectsResult.Empty();
 			}
 
+			List<LockObjectResponse> lockObjectResponses;
+			TimeSpan totalWaitingTime = TimeSpan.Zero;
+
 			if (maxWaitingTime.HasValue)
 			{
-				var lockInfos = LockObjectsWithWait(requestsList, maxWaitingTime.Value, out var totalWaitingTime);
-
-				return new LockObjectsResult(lockInfos.ToDictionary(li => li.ObjectId), totalWaitingTime);
+				lockObjectResponses = LockObjectsWithWait(requestsList, maxWaitingTime.Value, out totalWaitingTime);
 			}
 			else
 			{
-				var lockInfos = SendLockObjectRequests(requestsList);
-
-				return new LockObjectsResult(lockInfos.ToDictionary(li => li.ObjectId), TimeSpan.Zero);
+				lockObjectResponses = SendLockObjectRequests(requestsList);
 			}
+
+			var lockInfos = lockObjectResponses.SelectMany(response => response.Flatten()).Select(response => (ILockInfo)new LockInfo
+			{
+				ObjectId = response.ObjectId,
+				LockHolderInfo = response.LockHolderInfo,
+				IsGranted = response.LockIsGranted,
+				AutoUnlockTimestamp = response.AutoUnlockTimestamp,
+			}).ToList();
+
+			return new LockObjectsResult(lockInfos.ToDictionary(li => li.ObjectId), totalWaitingTime);
 		}
 
-		private ICollection<ILockInfo> LockObjectsWithWait(ICollection<LockObjectRequest> requests, TimeSpan maxWaitingTime, out TimeSpan totalWaitingTime)
+		private List<LockObjectResponse> LockObjectsWithWait(ICollection<LockObjectRequest> requests, TimeSpan maxWaitingTime, out TimeSpan totalWaitingTime)
 		{
 			if (requests == null)
 			{
@@ -254,18 +263,17 @@
 				throw new ArgumentOutOfRangeException(nameof(maxWaitingTime), "Max waiting time must be greater than zero.");
 			}
 
-			var objectIds = requests.Select(r => r.ObjectId).ToList();	
+			var lockObjectResponses = SendLockObjectRequests(requests);
 
-			var tasksToWaitForUnlock = unlockListener.StartListeningForUnlocks(objectIds).ToArray();
-
-			var lockInfos = SendLockObjectRequests(requests);
+			var objectIdsForNonAvailableLocks = lockObjectResponses.SelectMany(response => response.Flatten()).Where(response => !response.LockIsAvailable).Select(response => response.ObjectId).ToList();
 
 			totalWaitingTime = TimeSpan.Zero;
-			bool allLocksAreGranted = lockInfos.All(li => li.IsGranted);
 
-			while (!allLocksAreGranted && totalWaitingTime < maxWaitingTime)
+			while (objectIdsForNonAvailableLocks.Count > 0 && totalWaitingTime < maxWaitingTime)
 			{
-				Log($"Start waiting until objects '{string.Join(", ", objectIds)}' are unlocked");
+				var tasksToWaitForUnlock = unlockListener.StartListeningForUnlocks(objectIdsForNonAvailableLocks).ToArray();
+
+				Log($"Start waiting until objects '{String.Join(", ", objectIdsForNonAvailableLocks)}' are unlocked");
 
 				var remainingWaitingTime = maxWaitingTime - totalWaitingTime;
 				var stopwatch = Stopwatch.StartNew();
@@ -275,31 +283,32 @@
 				stopwatch.Stop();
 				totalWaitingTime += stopwatch.Elapsed;
 
-				Log($"Finished waiting until objects '{string.Join(", ", objectIds)}' are unlocked, took {stopwatch.Elapsed}");
-
 				if (objectsGotUnlockedAfterWaiting)
 				{
-					lockInfos = SendLockObjectRequests(requests);
-					allLocksAreGranted = lockInfos.All(li => li.IsGranted);
+					Log($"Finished waiting until objects '{String.Join(", ", objectIdsForNonAvailableLocks)}' are unlocked, took {stopwatch.Elapsed}");
+
+					lockObjectResponses = SendLockObjectRequests(requests);
+					objectIdsForNonAvailableLocks = lockObjectResponses.SelectMany(response => response.Flatten()).Where(response => !response.LockIsAvailable).Select(response => response.ObjectId).ToList();
 				}
 				else
 				{
-					allLocksAreGranted = false;
+					Log($"Timed-out while waiting until objects '{String.Join(", ", objectIdsForNonAvailableLocks)}' are unlocked.");
+					break;
 				}
 			}
 
-			unlockListener.StopListeningForUnlocks(objectIds);
+			unlockListener.StopListeningForUnlocks(objectIdsForNonAvailableLocks);
 
-			return lockInfos;
+			return lockObjectResponses;
 		}
 
-		private List<ILockInfo> SendLockObjectRequests(IEnumerable<LockObjectRequest> requests)
+		private List<LockObjectResponse> SendLockObjectRequests(IEnumerable<LockObjectRequest> requests)
 		{
 			if (requests is null) throw new ArgumentNullException(nameof(requests));
 
 			var requestsList = requests.ToList();
 
-			if (!requestsList.Any()) return new List<ILockInfo>();
+			if (!requestsList.Any()) return new List<LockObjectResponse>();
 
 			var lockObjectsRequestsMessage = new LockObjectsRequestsMessage
 			{
@@ -310,13 +319,7 @@
 
 			var responseMessage = interAppHandler.SendLockObjectsRequestsMessage(lockObjectsRequestsMessage);
 
-			return responseMessage.Responses.Select(x => (ILockInfo)new LockInfo
-			{
-				LockHolderInfo = x.LockHolderInfo,
-				IsGranted = x.LockIsGranted,
-				ObjectId = x.ObjectId,
-				AutoUnlockTimestamp = x.AutoUnlockTimestamp,
-			}).ToList();
+			return responseMessage.Responses.ToList();
 		}
 
 		private void Log(string message)

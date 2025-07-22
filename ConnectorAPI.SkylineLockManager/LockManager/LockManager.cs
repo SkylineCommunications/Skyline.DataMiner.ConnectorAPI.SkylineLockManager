@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
-	using Skyline.DataMiner.Net.Helper;
 
 	/// <inheritdoc cref="ILockManager"/>
 	public class LockManager : ILockManager
@@ -44,55 +43,67 @@
 		}
 
 		/// <inheritdoc cref="ILockManager.RequestLock(LockObjectRequest)"/>
-		public IEnumerable<LockObjectResponse> RequestLock(LockObjectRequest lockObjectRequest)
+		public virtual LockObjectResponse RequestLock(LockObjectRequest lockObjectRequest)
 		{
-			SetAutoUnlockTimeSpan(lockObjectRequest);
-
-			var lockObjectResponses = CheckLockAvailability(lockObjectRequest);
-
-			bool allLocksAreGranted = !lockObjectResponses.Any(lockRequestResult => !lockRequestResult.LockIsGranted);
-			if (allLocksAreGranted)
+			lock (lockedObjects)
 			{
-				LockObjects(lockObjectRequest);
-			}
-			else
-			{
-				// If one or more locks are not granted, then none of the locks should be granted.
-				lockObjectResponses.ForEach(lockRequestResult => lockRequestResult.LockIsGranted = false);
-			}
+				SetAutoUnlockTimeSpan(lockObjectRequest);
 
-			return lockObjectResponses;
+				var lockObjectResponse = CheckLockAvailability(lockObjectRequest);
+
+				var individualResponses = lockObjectResponse.Flatten().ToList();
+
+				bool allLocksAreAvailable = !individualResponses.Any(lockRequestResult => !lockRequestResult.LockIsAvailable);
+				if (allLocksAreAvailable)
+				{
+					LockObjects(lockObjectRequest);
+					individualResponses.ForEach(ir => ir.LockIsGranted = true);
+				}
+				else
+				{
+					// If one or more locks are not available, then none of the locks should be granted.
+					individualResponses.ForEach(ir => ir.LockIsGranted = false);
+				}
+
+				return lockObjectResponse;
+			}	
 		}
 
 		/// <inheritdoc cref="ILockManager.UnlockAllObjects"/>
-		public ICollection<string> UnlockAllObjects()
+		public virtual ICollection<string> UnlockAllObjects()
 		{
-			var allUnlockedObjects = lockedObjects.Keys.ToList();
+			lock (lockedObjects)
+			{
+				var allUnlockedObjects = lockedObjects.Keys.ToList();
 
-			lockedObjects.Clear();
+				lockedObjects.Clear();
 
-			return allUnlockedObjects;
+				return allUnlockedObjects;
+			}		
 		}
 
 		/// <inheritdoc cref="ILockManager.UnlockObject(string, bool)"/>
-		public ICollection<string> UnlockObject(string objectId, bool unlockLinkedObjects)
+		public virtual ICollection<string> UnlockObject(string objectId, bool unlockLinkedObjects)
 		{
-			var allUnlockedObjectIds = new List<string>();
-
-			if (unlockLinkedObjects && lockedObjects.TryGetValue(objectId, out var objectToUnlock))
+			lock (lockedObjects)
 			{
-				foreach (var linkedObjectId in objectToUnlock.LinkedObjectIds)
+				var allUnlockedObjectIds = new List<string>();
+
+				if (unlockLinkedObjects && lockedObjects.TryGetValue(objectId, out var objectToUnlock))
 				{
-					allUnlockedObjectIds.AddRange(UnlockObject(linkedObjectId, unlockLinkedObjects));
+					foreach (var linkedObjectId in objectToUnlock.LinkedObjectIds)
+					{
+						allUnlockedObjectIds.AddRange(UnlockObject(linkedObjectId, unlockLinkedObjects));
+					}
 				}
-			}
 
-			if (lockedObjects.Remove(objectId))
-			{
-				allUnlockedObjectIds.Add(objectId);
-			}
+				if (lockedObjects.Remove(objectId))
+				{
+					allUnlockedObjectIds.Add(objectId);
+				}
 
-			return allUnlockedObjectIds;
+				return allUnlockedObjectIds;
+			}		
 		}
 
 		private void SetAutoUnlockTimeSpan(LockObjectRequest request)
@@ -105,37 +116,38 @@
 			}
 		}
 
-		private IEnumerable<LockObjectResponse> CheckLockAvailability(LockObjectRequest request)
+		private LockObjectResponse CheckLockAvailability(LockObjectRequest request)
 		{
 			if (request == null)
+			{
 				throw new ArgumentNullException(nameof(request));
+			}
 
-			var lockObjectResponses = new List<LockObjectResponse>();
+			var linkedLockObjectResponses = new List<LockObjectResponse>();
 
 			foreach (var linkedObjectRequest in request.LinkedObjectRequests)
 			{
-				lockObjectResponses.AddRange(CheckLockAvailability(linkedObjectRequest));
+				linkedLockObjectResponses.Add(CheckLockAvailability(linkedObjectRequest));
 			}
 
 			var lockObjectResponse = new LockObjectResponse
 			{
 				ObjectId = request.ObjectId,
+				LinkedObjectResponses = linkedLockObjectResponses,
 			};
 
 			if (lockedObjects.TryGetValue(request.ObjectId, out var lockedObject))
 			{
-				lockObjectResponse.LockIsGranted = false;
+				lockObjectResponse.LockIsAvailable = false;
 				lockObjectResponse.LockHolderInfo = lockedObject.LockHolderInfo;
 			}
 			else
 			{
-				lockObjectResponse.LockIsGranted = true;
+				lockObjectResponse.LockIsAvailable = true;
 				lockObjectResponse.LockHolderInfo = request.LockRequesterInfo;
 			}
 
-			lockObjectResponses.Add(lockObjectResponse);
-
-			return lockObjectResponses;
+			return lockObjectResponse;
 		}
 
 		private void LockObjects(LockObjectRequest lockRequest)
