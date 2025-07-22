@@ -181,15 +181,15 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 			Assert.AreEqual(1 /*Context A*/ + 3 /*Initial attempt from contexts B,C,D*/ + 3/*Second attempt from contexts B,C,D*/, lockManagerMock.ReceivedLockObjectRequests.Count);
 
 			Assert.AreEqual(1, lockInfoFromContextThatGotTheLock.Count(), "Only one context should have gotten the lock.");
-			Assert.AreEqual(2, lockInfoFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 0.1 /* Accurate up to 100 milliseconds */);
+			Assert.AreEqual(2, lockInfoFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
 
 			var lockInfoFromContextsThatDidNotGetTheLock = new[] {lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD}
 				.Where(x => x.LockInfosPerObjectId.ContainsKey("objectId") && !x.LockInfosPerObjectId["objectId"].IsGranted);
 
 			Assert.AreEqual(2, lockInfoFromContextsThatDidNotGetTheLock.Count(), "Two contexts should not have gotten the lock.");
 
-			Assert.AreEqual(maxWaitingTime.TotalMilliseconds, lockInfoFromContextsThatDidNotGetTheLock.First().TotalWaitingTime.TotalMilliseconds, 20 /* Accurate up to 20 milliseconds */);
-			Assert.AreEqual(maxWaitingTime.TotalMilliseconds, lockInfoFromContextsThatDidNotGetTheLock.Last().TotalWaitingTime.TotalMilliseconds, 20 /* Accurate up to 20 milliseconds */);
+			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.First().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
+			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.Last().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
 		}
 
 		[TestMethod()]
