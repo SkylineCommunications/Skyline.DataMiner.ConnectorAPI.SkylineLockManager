@@ -3,7 +3,6 @@
 	using System.Threading.Tasks;
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.HigherPriorityLockRequests;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Unlocking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
@@ -12,8 +11,8 @@
 	[TestClass()]
 	public class SkylineLockManagerConnectorApiTests
 	{
-		[TestMethod()]
-		public void ListenForHigherPriorityLockRequests_HigherPrioLockRequestCameIn()
+		[TestMethod]
+		public void Dispose_AllMonitorsStopped()
 		{
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
@@ -24,68 +23,20 @@
 
 			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
 
-			int lowPriority = 5;
-
 			// Act
-			lockManagerConnectorApi.ListenForLockRequestsWithHigherPriorityThan(new ObjectIdAndPriority("objectId", lowPriority));
 
-			bool higherPrioLockRequestCameIn = false;
-			lockManagerConnectorApi.HigherPriorityLockRequestReceived += (sender, args) =>
-			{
-				if (args.LockObjectRequest.ObjectId == "objectId" && args.LockObjectRequest.Priority > lowPriority)
-				{
-					higherPrioLockRequestCameIn = true;
-				}
-			};
+			higherPrioLockRequestListenerMock.ListenForLockRequestsWithHigherPriorityThan("objectId", priority: 1);
+			unlockListenerMock.StartListeningForUnlock("objectId");
 
-			lockManagerMock.InvokeHigherPriorityLockRequestReceived(new LockObjectRequest
-			{
-				ObjectId = "objectId",
-				Priority = 1,
-			});
+			lockManagerConnectorApi.Dispose();
 
 			// Assert
-			Assert.IsTrue(higherPrioLockRequestCameIn);
+			Assert.AreEqual(1, unlockListenerMock.AmountOfTimesMonitorStopped);
+			Assert.AreEqual(1, higherPrioLockRequestListenerMock.AmountOfTimesMonitorStopped);
 		}
 
 		[TestMethod()]
-		public void ListenForHigherPriorityLockRequests_NoHigherPrioLockRequestCameIn()
-		{
-			// Arrange
-			var lockManagerMock = new LockManagerMock();
-
-			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
-			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
-			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
-
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
-
-			int lowPriority = 5;
-
-			// Act
-			lockManagerConnectorApi.ListenForLockRequestsWithHigherPriorityThan(new ObjectIdAndPriority("objectId", lowPriority));
-
-			bool higherPrioLockRequestCameIn = false;
-			lockManagerConnectorApi.HigherPriorityLockRequestReceived += (sender, args) =>
-			{
-				if (args.LockObjectRequest.ObjectId == "objectId" && args.LockObjectRequest.Priority > lowPriority)
-				{
-					higherPrioLockRequestCameIn = true;
-				}
-			};
-
-			lockManagerMock.InvokeHigherPriorityLockRequestReceived(new LockObjectRequest
-			{
-				ObjectId = "objectId",
-				Priority = lowPriority,
-			});
-
-			// Assert
-			Assert.IsFalse(higherPrioLockRequestCameIn);
-		}
-
-		[TestMethod()]
-		public void LockObject_WithoutWait_NoSubscriptionMade()
+		public void LockObject_NullWait_NoMonitorStarted()
 		{
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
@@ -110,7 +61,57 @@
 		}
 
 		[TestMethod()]
-		public void LockObject_WithWait_SubscriptionMade()
+		public void LockObject_NegativeWait_NoMonitorStarted()
+		{
+			// Arrange
+			var lockManagerMock = new LockManagerMock();
+
+			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
+
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+
+			// Act
+			var lockObjectRequest = new LockObjectRequest
+			{
+				ObjectId = "objectId",
+			};
+
+			lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime: TimeSpan.FromSeconds(-30));
+
+			// Assert
+			Assert.AreEqual(0, unlockListenerMock.AmountOfTimesMonitorStarted);
+			Assert.AreEqual(0, unlockListenerMock.AmountOfTimesMonitorStopped);
+		}
+
+		[TestMethod()]
+		public void LockObject_ZeroWait_NoMonitorStarted()
+		{
+			// Arrange
+			var lockManagerMock = new LockManagerMock();
+
+			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
+
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+
+			// Act
+			var lockObjectRequest = new LockObjectRequest
+			{
+				ObjectId = "objectId",
+			};
+
+			lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime: TimeSpan.Zero);
+
+			// Assert
+			Assert.AreEqual(0, unlockListenerMock.AmountOfTimesMonitorStarted);
+			Assert.AreEqual(0, unlockListenerMock.AmountOfTimesMonitorStopped);
+		}
+
+		[TestMethod()]
+		public void LockObject_PositiveWait_MonitorStartedAndStopped()
 		{
 			// Arrange
 			var lockManagerMock = new LockManagerMock(new Dictionary<string, LockedObject> { { "objectId", new LockedObject { ObjectId = "objectId" } } });
@@ -135,6 +136,43 @@
 		}
 
 		[TestMethod()]
+		public void LockObject_WithWait_MonitorStartedAndStopped()
+		{
+			// Arrange
+			string objectId = "objectId";
+
+			var lockManagerMock = new LockManagerMock(new Dictionary<string, LockedObject> { { objectId, new LockedObject { ObjectId = objectId, LinkedObjectIds = new List<string>() } } });
+
+			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
+
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+
+			// Act
+			var lockObjectRequest = new LockObjectRequest
+			{
+				ObjectId = objectId,
+			};
+
+			var taskToWaitFor = Task.Run(() => lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime: TimeSpan.FromSeconds(10)));
+
+			Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+
+			lockManagerMock.UnlockObject(objectId, unlockLinkedObjects: true);
+
+			bool taskCompleted = taskToWaitFor.Wait(TimeSpan.FromSeconds(1));
+			var lockObjectResult = taskToWaitFor.Result;
+
+			// Assert
+			Assert.IsTrue(taskCompleted, "Task should have completed within the wait time.");
+			Assert.IsNotNull(lockObjectResult);
+			Assert.IsTrue(lockObjectResult.LockInfosPerObjectId.Single().Value.IsGranted);
+			Assert.AreEqual(1, unlockListenerMock.AmountOfTimesMonitorStarted);
+			Assert.AreEqual(1, unlockListenerMock.AmountOfTimesMonitorStopped);
+		}
+
+		[TestMethod()]
 		public void MultipleContextsWaitingForSameLock_AllContextsWaitForMaxWaitingTime()
 		{
 			// Arrange
@@ -146,10 +184,12 @@
 
 			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
 
+			string objectId = "objectId";
+
 			// Act
 			var lockObjectRequest = new LockObjectRequest
 			{
-				ObjectId = "objectId",
+				ObjectId = objectId,
 			};
 
 			// Context A locks the object
@@ -168,7 +208,7 @@
 			// Context A unlocks the object
 			lockManagerConnectorApi.UnlockObject(new UnlockObjectRequest
 			{
-				ObjectId = "objectId",
+				ObjectId = objectId,
 			});
 
 			// Context B, C and D finish waiting for the lock
@@ -177,18 +217,20 @@
 			var lockObjectResultFromContextC = taskToLockServiceFromContextC.Result;
 			var lockObjectResultFromContextD = taskToLockServiceFromContextD.Result;
 
-			var lockInfoFromContextThatGotTheLock = new[] {lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD}
-				.Where(x => x.LockInfosPerObjectId.ContainsKey("objectId") && x.LockInfosPerObjectId["objectId"].IsGranted);
 
+			// Assert
 			Assert.AreEqual(1 /*Context A*/ + 3 /*Initial attempt from contexts B,C,D*/ + 3/*Second attempt from contexts B,C,D*/, lockManagerMock.ReceivedLockObjectRequests.Count);
 
-			Assert.AreEqual(1, lockInfoFromContextThatGotTheLock.Count(), "Only one context should have gotten the lock.");
-			Assert.AreEqual(2, lockInfoFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
+			var lockInfosFromContextThatGotTheLock = new[] { lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD }
+				.Where(x => x.LockInfosPerObjectId.ContainsKey(objectId) && x.LockInfosPerObjectId[objectId].IsGranted).ToList();
+
+			Assert.AreEqual(1, lockInfosFromContextThatGotTheLock.Count, "Only one context should have gotten the lock.");
+			Assert.AreEqual(2, lockInfosFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
 
 			var lockInfoFromContextsThatDidNotGetTheLock = new[] {lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD}
-				.Where(x => x.LockInfosPerObjectId.ContainsKey("objectId") && !x.LockInfosPerObjectId["objectId"].IsGranted);
+				.Where(x => x.LockInfosPerObjectId.ContainsKey(objectId) && !x.LockInfosPerObjectId[objectId].IsGranted).ToList();
 
-			Assert.AreEqual(2, lockInfoFromContextsThatDidNotGetTheLock.Count(), "Two contexts should not have gotten the lock.");
+			Assert.AreEqual(2, lockInfoFromContextsThatDidNotGetTheLock.Count, "Two contexts should not have gotten the lock.");
 
 			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.First().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
 			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.Last().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);

@@ -101,6 +101,11 @@
 					taskCompletionSource.SetResult(result: true);
 				}
 			}
+
+			if (taskCompletionSources.IsEmpty && isListening)
+			{
+				StopListening();
+			}
 		}
 
 		/// <inheritdoc cref="Listener.Dispose(bool)"/>
@@ -110,11 +115,8 @@
 			{
 				if (disposing)
 				{
+					StopListeningForUnlocks(taskCompletionSources.Keys);
 					StopListening();
-					foreach (var taskCompletionSource in taskCompletionSources.Values)
-					{
-						taskCompletionSource.TrySetCanceled();
-					}
 				}
 
 				disposedValue = true;

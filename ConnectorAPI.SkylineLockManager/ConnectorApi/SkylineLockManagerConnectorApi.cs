@@ -111,7 +111,7 @@
 			this.logger = logger;
 		}
 
-		/// <inheritdoc cref="IHigherPriorityLockRequestListener.HigherPriorityLockRequestReceived"/>
+		/// <inheritdoc/>
 		public event EventHandler<LockObjectRequestEventArgs> HigherPriorityLockRequestReceived
 		{
 			add
@@ -130,19 +130,37 @@
 			}
 		}
 
-		/// <inheritdoc cref="IHigherPriorityLockRequestListener.ListenForLockRequestsWithHigherPriorityThan(ObjectIdAndPriority[])"/>
-		public void ListenForLockRequestsWithHigherPriorityThan(params ObjectIdAndPriority[] objectIdAndPriorities)
+		/// <inheritdoc/>
+		public void ListenForLockRequestsWithHigherPriorityThan(string objectId, int priority)
 		{
-			higherPrioLockRequestListener.ListenForLockRequestsWithHigherPriorityThan(objectIdAndPriorities);
+			ListenForLockRequestsWithHigherPriorityThan(new Dictionary<string, ICollection<int>>
+			{
+				{ objectId, new[] { priority } }
+			});
 		}
 
-		/// <inheritdoc cref="IHigherPriorityLockRequestListener.StopListeningForLockRequestsWithHigherPriorityThan(ObjectIdAndPriority[])"/>
-		public void StopListeningForLockRequestsWithHigherPriorityThan(params ObjectIdAndPriority[] objectIdAndPriorities)
+		/// <inheritdoc/>
+		public void ListenForLockRequestsWithHigherPriorityThan(ICollection<KeyValuePair<string, ICollection<int>>> objectIdsAndPrioritiesToStartListeningFor)
 		{
-			higherPrioLockRequestListener.StopListeningForLockRequestsWithHigherPriorityThan(objectIdAndPriorities);
+			higherPrioLockRequestListener.ListenForLockRequestsWithHigherPriorityThan(objectIdsAndPrioritiesToStartListeningFor);
 		}
 
-		/// <inheritdoc cref="ISkylineLockManagerConnectorApi.LockObject(LockObjectRequest, TimeSpan?)"/>
+		/// <inheritdoc/>
+		public void StopListeningForLockRequestsWithHigherPriorityThan(string objectId, int priority)
+		{
+			StopListeningForLockRequestsWithHigherPriorityThan(new Dictionary<string, ICollection<int>>
+			{
+				{ objectId, new[] { priority } }
+			});
+		}
+
+		/// <inheritdoc/>
+		public void StopListeningForLockRequestsWithHigherPriorityThan(ICollection<KeyValuePair<string, ICollection<int>>> objectIdsAndPrioritiesToStopListeningFor)
+		{
+			higherPrioLockRequestListener.StopListeningForLockRequestsWithHigherPriorityThan(objectIdsAndPrioritiesToStopListeningFor);
+		}
+
+		/// <inheritdoc/>
 		/// <exception cref="ArgumentNullException"/>
 		public ILockObjectsResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null)
 		{
@@ -154,21 +172,21 @@
 			return LockObjectsInternal(new[] { request }, maxWaitingTime);
 		}
 
-		/// <inheritdoc cref="ISkylineLockManagerConnectorApi.LockObjects(IEnumerable{LockObjectRequest}, TimeSpan?)"/>
+		/// <inheritdoc/>
 		/// <exception cref="ArgumentNullException"/>
 		public ILockObjectsResult LockObjects(IEnumerable<LockObjectRequest> requests, TimeSpan? maxWaitingTime = null)
 		{
 			return LockObjectsInternal(requests, maxWaitingTime);
 		}
 
-		/// <inheritdoc cref="ISkylineLockManagerConnectorApi.UnlockObject(UnlockObjectRequest)"/>
+		/// <inheritdoc/>
 		/// <exception cref="ArgumentNullException"/>
 		public void UnlockObject(UnlockObjectRequest request)
 		{
 			UnlockObjects(new[] { request });
 		}
 
-		/// <inheritdoc cref="ISkylineLockManagerConnectorApi.UnlockObjects(IEnumerable{UnlockObjectRequest})"/>
+		/// <inheritdoc/>
 		/// <exception cref="ArgumentNullException"/>
 		public void UnlockObjects(IEnumerable<UnlockObjectRequest> requests)
 		{
@@ -188,7 +206,7 @@
 			Log($"Unlocked objects {string.Join(", ", requestsList.Select(r => r.ObjectId))}");
 		}
 
-		/// <inheritdoc cref="IDisposable.Dispose"/>
+		/// <inheritdoc/>
 		public void Dispose()
 		{
 			Dispose(disposing: true);
@@ -232,7 +250,7 @@
 			List<LockObjectResponse> lockObjectResponses;
 			TimeSpan totalWaitingTime = TimeSpan.Zero;
 
-			if (maxWaitingTime.HasValue)
+			if (maxWaitingTime.HasValue && maxWaitingTime.Value > TimeSpan.Zero)
 			{
 				lockObjectResponses = LockObjectsWithWait(requestsList, maxWaitingTime.Value, out totalWaitingTime);
 			}

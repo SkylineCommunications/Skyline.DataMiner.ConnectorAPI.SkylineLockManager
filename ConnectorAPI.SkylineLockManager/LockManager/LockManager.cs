@@ -139,12 +139,12 @@
 			if (lockedObjects.TryGetValue(request.ObjectId, out var lockedObject))
 			{
 				lockObjectResponse.LockIsAvailable = false;
-				lockObjectResponse.LockHolderInfo = lockedObject.LockHolderInfo;
+				lockObjectResponse.LockHolderInfo = lockedObject.ContextInfo;
 			}
 			else
 			{
 				lockObjectResponse.LockIsAvailable = true;
-				lockObjectResponse.LockHolderInfo = request.LockRequesterInfo;
+				lockObjectResponse.LockHolderInfo = request.ContextInfo;
 			}
 
 			return lockObjectResponse;
@@ -161,7 +161,7 @@
 			{
 				ObjectId = lockRequest.ObjectId,
 				ObjectDescription = lockRequest.ObjectDescription,
-				LockHolderInfo = lockRequest.LockRequesterInfo,
+				ContextInfo = lockRequest.ContextInfo,
 				Timestamp = DateTime.Now,
 				AutoUnlockTimestamp = DateTime.Now + lockRequest.AutoUnlockTimeSpan.Value,
 				LinkedObjectIds = lockRequest.LinkedObjectRequests.Select(lo => lo.ObjectId).ToList(),

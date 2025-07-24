@@ -26,11 +26,6 @@
 			ObjectsUnlocked?.Invoke(this, objectIds);
 		}
 
-		public void InvokeHigherPriorityLockRequestReceived(LockObjectRequest lockObjectRequest)
-		{
-			HigherPriorityLockRequestReceived?.Invoke(this, new LockObjectRequestEventArgs(lockObjectRequest));
-		}
-
 		public override LockObjectResponse RequestLock(LockObjectRequest lockObjectRequest)
 		{
 			var result = base.RequestLock(lockObjectRequest);
@@ -58,6 +53,11 @@
 			InvokeObjectsUnlocked(unlockedObjectIds.ToArray());
 
 			return unlockedObjectIds;
+		}
+
+		private void InvokeHigherPriorityLockRequestReceived(LockObjectRequest lockObjectRequest)
+		{
+			HigherPriorityLockRequestReceived?.Invoke(this, new LockObjectRequestEventArgs(lockObjectRequest));
 		}
 	}
 }

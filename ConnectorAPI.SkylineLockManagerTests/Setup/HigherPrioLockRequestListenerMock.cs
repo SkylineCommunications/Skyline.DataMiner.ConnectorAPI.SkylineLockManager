@@ -4,20 +4,21 @@
 
 	internal class HigherPrioLockRequestListenerMock : HigherPriorityLockRequestListenerBase
 	{
+		private readonly LockManagerMock lockManager;
+
 		public HigherPrioLockRequestListenerMock(LockManagerMock lockManager)
 		{
-			LockManager = lockManager ?? throw new ArgumentNullException(nameof(lockManager));
+			this.lockManager = lockManager ?? throw new ArgumentNullException(nameof(lockManager));
 		}
 
 		public int AmountOfTimesMonitorStarted { get; private set; } = 0;
 
 		public int AmountOfTimesMonitorStopped { get; private set; } = 0;
 
-		public LockManagerMock LockManager { get; }
 
 		protected override void StartMonitor()
 		{
-			LockManager.HigherPriorityLockRequestReceived += LockManager_HigherPriorityLockRequestReceived;
+			lockManager.HigherPriorityLockRequestReceived += LockManager_HigherPriorityLockRequestReceived;
 			AmountOfTimesMonitorStarted++;
 		}
 
@@ -28,7 +29,7 @@
 
 		protected override void StopMonitor()
 		{
-			LockManager.HigherPriorityLockRequestReceived -= LockManager_HigherPriorityLockRequestReceived;
+			lockManager.HigherPriorityLockRequestReceived -= LockManager_HigherPriorityLockRequestReceived;
 			AmountOfTimesMonitorStopped++;
 		}
 	}

@@ -48,13 +48,37 @@
 		void UnlockObjects(IEnumerable<UnlockObjectRequest> requests);
 
 		/// <summary>
-		/// Returns a task that will complete when a higher priority lock request is made for the specified object ID and priority.
+		/// Listens for lock requests on the specified object that have a higher priority than the given value.
 		/// </summary>
-		void ListenForLockRequestsWithHigherPriorityThan(params ObjectIdAndPriority[] objectIdAndPriorities);
+		/// <remarks>This method enables monitoring of lock requests with higher priority levels, which can be useful
+		/// for managing resource contention or implementing custom priority-based locking mechanisms.</remarks>
+		/// <param name="objectId">The unique identifier of the object for which to monitor lock requests.</param>
+		/// <param name="priority">The priority threshold. Only lock requests with a priority greater than this value will be considered.</param>
+		void ListenForLockRequestsWithHigherPriorityThan(string objectId, int priority);
 
 		/// <summary>
-		/// Stops listening for higher priority lock requests for a specific object ID and priority.
+		/// Starts listening for lock requests with a higher priority than the specified priorities for the given object IDs.
 		/// </summary>
-		void StopListeningForLockRequestsWithHigherPriorityThan(params ObjectIdAndPriority[] objectIdAndPriorities);
+		/// <remarks>This method enables monitoring of lock requests with higher priority levels for specific objects.
+		/// It is useful in scenarios where priority-based lock management is required.</remarks>
+		/// <param name="objectIdsAndPrioritiesToStartListeningFor">A collection of key-value pairs where each key represents an object ID, and the associated value is a collection of priority levels. The method will listen for lock requests with priorities higher than those specified for each object ID.</param>
+		void ListenForLockRequestsWithHigherPriorityThan(ICollection<KeyValuePair<string, ICollection<int>>> objectIdsAndPrioritiesToStartListeningFor);
+
+		/// <summary>
+		/// Stops listening for lock requests with a priority higher than the specified value for the given object.
+		/// </summary>
+		/// <remarks>This method is used to filter out lock requests based on their priority, allowing the caller to
+		/// focus on lower-priority requests.</remarks>
+		/// <param name="objectId">The identifier of the object for which to stop listening for lock requests.</param>
+		/// <param name="priority">The priority threshold. Lock requests with a priority higher than this value will no longer be listened to.</param>
+		void StopListeningForLockRequestsWithHigherPriorityThan(string objectId, int priority);
+
+		/// <summary>
+		/// Stops listening for lock requests with a higher priority than the specified values.
+		/// </summary>
+		/// <remarks>This method is used to cease monitoring lock requests that exceed the specified priority levels
+		/// for the given object IDs. Ensure that the provided collection is not null and contains valid object IDs and priority levels.</remarks>
+		/// <param name="objectIdsAndPrioritiesToStopListeningFor">A collection of key-value pairs where each key represents an object ID, and the value is a collection of priority levels. The method stops listening for lock requests with priorities higher than those specified for each object ID.</param>
+		void StopListeningForLockRequestsWithHigherPriorityThan(ICollection<KeyValuePair<string, ICollection<int>>> objectIdsAndPrioritiesToStopListeningFor);
 	}
 }

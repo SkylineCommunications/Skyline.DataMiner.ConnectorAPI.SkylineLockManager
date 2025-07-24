@@ -59,7 +59,7 @@
 				{
 					ObjectId = objectId,
 					ObjectDescription = "object description",
-					LockRequesterInfo = "unit test",
+					ContextInfo = "unit test",
 					LinkedObjectRequests = new List<LockObjectRequest>(),
 					AutoUnlockTimeSpan = TimeSpan.FromMinutes(5),
 				});
@@ -88,14 +88,14 @@
 				{
 					ObjectId = objectId,
 					ObjectDescription = "object description",
-					LockRequesterInfo = "unit test",
+					ContextInfo = "unit test",
 					LinkedObjectRequests = new List<LockObjectRequest>
 					{
 						new LockObjectRequest
 						{
 							ObjectId = firstLinkedobjectId,
 							ObjectDescription = "first linked object",
-							LockRequesterInfo = "unit test",
+							ContextInfo = "unit test",
 							AutoUnlockTimeSpan = TimeSpan.FromMinutes(5),
 							LinkedObjectRequests = new List<LockObjectRequest>(),
 						},
@@ -103,7 +103,7 @@
 						{
 							ObjectId = secondLinkedobjectId,
 							ObjectDescription = "second linked object",
-							LockRequesterInfo = "unit test",
+							ContextInfo = "unit test",
 							AutoUnlockTimeSpan = TimeSpan.FromMinutes(5),
 							LinkedObjectRequests = new List<LockObjectRequest>(),
 						},
@@ -130,7 +130,7 @@
 					{
 						ObjectId = objectId,
 						ObjectDescription = "object description",
-						LockHolderInfo = "first requester",
+						ContextInfo = "first requester",
 						LinkedObjectIds = new List<string>(),
 						AutoUnlockTimestamp = DateTime.Now.AddMinutes(5),
 					}
@@ -144,7 +144,7 @@
 			{
 				ObjectId = objectId,
 				ObjectDescription = "object description",
-				LockRequesterInfo = "second requester",
+				ContextInfo = "second requester",
 				LinkedObjectRequests = new List<LockObjectRequest>(),
 				AutoUnlockTimeSpan = TimeSpan.FromMinutes(5),
 			});
@@ -172,7 +172,7 @@
 					{
 						ObjectId = firstLinkedobjectId,
 						ObjectDescription = "first linked object",
-						LockHolderInfo = "first requester",
+						ContextInfo = "first requester",
 						LinkedObjectIds = new List<string>(),
 						AutoUnlockTimestamp = DateTime.Now.AddMinutes(5),
 					}
@@ -187,14 +187,14 @@
 				{
 					ObjectId = objectId,
 					ObjectDescription = "main object",
-					LockRequesterInfo = "second requester",
+					ContextInfo = "second requester",
 					LinkedObjectRequests = new List<LockObjectRequest>
 					{
 						new LockObjectRequest
 						{
 							ObjectId = firstLinkedobjectId,
 							ObjectDescription = "first linked object",
-							LockRequesterInfo = "second requester",
+							ContextInfo = "second requester",
 							AutoUnlockTimeSpan = TimeSpan.FromMinutes(5),
 							LinkedObjectRequests = new List<LockObjectRequest>(),
 						},
@@ -202,7 +202,7 @@
 						{
 							ObjectId = secondLinkedobjectId,
 							ObjectDescription = "second linked object",
-							LockRequesterInfo = "second requester",
+							ContextInfo = "second requester",
 							AutoUnlockTimeSpan = TimeSpan.FromMinutes(5),
 							LinkedObjectRequests = new List<LockObjectRequest>(),
 						},

@@ -1,10 +1,11 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.HigherPriorityLockRequests
 {
 	using System;
+	using System.Collections.Concurrent;
+	using System.Collections.Generic;
 	using System.Linq;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
-	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 
 	/// <summary>
 	/// Provides a base class for listeners that monitor and handle lock requests with higher priority.
@@ -19,9 +20,7 @@
 		/// <summary>
 		/// Represents a thread-safe collection of object IDs and their associated priorities.
 		/// </summary>
-		/// <remarks>This collection is designed to allow concurrent access and modifications, ensuring thread safety
-		/// when multiple threads interact with the stored <see cref="ObjectIdAndPriority"/> instances.</remarks>
-		protected readonly ConcurrentHashSet<ObjectIdAndPriority> objectIdsAndPriorities = new ConcurrentHashSet<ObjectIdAndPriority>();
+		protected readonly ConcurrentDictionary<string, HashSet<int>> objectIdsAndPriorities = new ConcurrentDictionary<string, HashSet<int>>();
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="HigherPriorityLockRequestListenerBase"/> class.
@@ -33,39 +32,87 @@
 
 		}
 
-		/// <inheritdoc cref="IHigherPriorityLockRequestListener.HigherPriorityLockRequestReceived"/>
+		/// <inheritdoc/>
 		public event EventHandler<LockObjectRequestEventArgs> HigherPriorityLockRequestReceived;
 
-		/// <inheritdoc cref="IHigherPriorityLockRequestListener.ListenForLockRequestsWithHigherPriorityThan(ObjectIdAndPriority[])"/>
-		public void ListenForLockRequestsWithHigherPriorityThan(params ObjectIdAndPriority[] objectIdAndPriorities)
+		/// <inheritdoc/>
+		public void ListenForLockRequestsWithHigherPriorityThan(string objectId, int priority)
 		{
-			if (!objectIdAndPriorities.Any())
+			ListenForLockRequestsWithHigherPriorityThan(new Dictionary<string, ICollection<int>>()
+			{
+				{ objectId, new List<int>() { priority } }
+			});
+		}
+
+		/// <inheritdoc/>
+		public void ListenForLockRequestsWithHigherPriorityThan(ICollection<KeyValuePair<string, ICollection<int>>> objectIdsAndPrioritiesToStartListeningFor)
+		{
+			if (objectIdsAndPrioritiesToStartListeningFor == null)
+			{
+				throw new ArgumentNullException(nameof(objectIdsAndPrioritiesToStartListeningFor));
+			}
+
+			if (objectIdsAndPrioritiesToStartListeningFor.Count == 0)
 			{
 				return;
 			}
 
-			foreach (var objectIdAndPriority in objectIdAndPriorities)
+			if (objectIdsAndPrioritiesToStartListeningFor.Any(kvp => kvp.Value == null))
 			{
-				objectIdsAndPriorities.TryAdd(objectIdAndPriority);
+				throw new ArgumentException("One or more key-value pairs have null values", nameof(objectIdsAndPrioritiesToStartListeningFor));
 			}
 
-			if (!isListening)
+			foreach (var objectIdAndPrioritiesToListenFor in objectIdsAndPrioritiesToStartListeningFor)
+			{
+				var priorities = objectIdsAndPriorities.GetOrAdd(objectIdAndPrioritiesToListenFor.Key, _ => new HashSet<int>());
+
+				priorities.UnionWith(objectIdAndPrioritiesToListenFor.Value);
+			}
+
+			if (!objectIdsAndPriorities.IsEmpty && !isListening)
 			{
 				StartListening();
 			}
 		}
 
-		/// <inheritdoc cref="IHigherPriorityLockRequestListener.StopListeningForLockRequestsWithHigherPriorityThan(ObjectIdAndPriority[])"/>
-		public void StopListeningForLockRequestsWithHigherPriorityThan(params ObjectIdAndPriority[] objectIdAndPriorities)
+		/// <inheritdoc/>
+		public void StopListeningForLockRequestsWithHigherPriorityThan(string objectId, int priority)
 		{
-			if (!objectIdAndPriorities.Any())
+			StopListeningForLockRequestsWithHigherPriorityThan(new Dictionary<string, ICollection<int>>()
+			{
+				{ objectId, new List<int>() { priority } }
+			});
+		}
+
+		/// <inheritdoc/>
+		public void StopListeningForLockRequestsWithHigherPriorityThan(ICollection<KeyValuePair<string, ICollection<int>>> objectIdsAndPrioritiesToStopListeningFor)
+		{
+			if (objectIdsAndPrioritiesToStopListeningFor == null)
+			{
+				throw new ArgumentNullException(nameof(objectIdsAndPrioritiesToStopListeningFor));
+			}
+
+			if (objectIdsAndPrioritiesToStopListeningFor.Count == 0)
 			{
 				return;
 			}
 
-			foreach (var objectIdAndPriority in objectIdAndPriorities)
+			if (objectIdsAndPrioritiesToStopListeningFor.Any(kvp => kvp.Value == null))
 			{
-				objectIdsAndPriorities.TryRemove(objectIdAndPriority);
+				throw new ArgumentException("One or more key-value pairs have null values", nameof(objectIdsAndPrioritiesToStopListeningFor));
+			}
+
+			foreach (var objectIdAndPriorities in objectIdsAndPrioritiesToStopListeningFor)
+			{
+				if (objectIdsAndPriorities.TryGetValue(objectIdAndPriorities.Key, out var priorities))
+				{
+					priorities.ExceptWith(objectIdAndPriorities.Value);
+
+					if (priorities.Count == 0)
+					{
+						objectIdsAndPriorities.TryRemove(objectIdAndPriorities.Key, out _);
+					}
+				}
 			}
 
 			if (objectIdsAndPriorities.IsEmpty && isListening)
@@ -86,7 +133,7 @@
 			string objectIdFromLockRequest = lockObjectRequest.ObjectId;
 			var priorityFromLockRequest = lockObjectRequest.Priority;
 			
-			if (objectIdsAndPriorities.Any(idAndPrio => idAndPrio.ObjectId == objectIdFromLockRequest && priorityFromLockRequest < idAndPrio.Priority /*lower value means higher priority*/))
+			if (objectIdsAndPriorities.Any(idAndPrios => idAndPrios.Key == objectIdFromLockRequest && idAndPrios.Value.Any(prio => priorityFromLockRequest < prio /*lower value means higher priority*/)))
 			{
 				InvokeHigherPriorityLockRequestReceived(lockObjectRequest);
 			}	
@@ -104,7 +151,7 @@
 			HigherPriorityLockRequestReceived?.Invoke(this, new LockObjectRequestEventArgs(lockObjectRequest));
 		}
 
-		/// <inheritdoc cref="Listener.Dispose(bool)"/>
+		/// <inheritdoc/>
 		protected override void Dispose(bool disposing)
 		{
 			if (!disposedValue)
