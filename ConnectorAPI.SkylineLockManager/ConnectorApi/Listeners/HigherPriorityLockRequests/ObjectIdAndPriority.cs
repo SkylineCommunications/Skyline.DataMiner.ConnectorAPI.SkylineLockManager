@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.HigherPriorityLockRequests
 {
 	using System;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
 
 	/// <summary>
 	/// Represents an object ID and a priority.
@@ -12,9 +11,9 @@
 		/// Initializes a new instance of the <see cref="ObjectIdAndPriority"/> struct.
 		/// </summary>
 		/// <param name="objectId"></param>
-		/// <param name="priorityToCompareWith"></param>
+		/// <param name="priority"></param>
 		/// <exception cref="ArgumentNullException"></exception>
-		public ObjectIdAndPriority(string objectId, Priority priorityToCompareWith)
+		public ObjectIdAndPriority(string objectId, int priority)
 		{
 			if (string.IsNullOrWhiteSpace(objectId))
 			{
@@ -22,7 +21,7 @@
 			}
 
 			ObjectId = objectId;
-			Priority = priorityToCompareWith;
+			Priority = priority;
 		}
 
 		/// <summary>
@@ -31,9 +30,9 @@
 		public string ObjectId { get; }
 
 		/// <summary>
-		/// Gets the priority.
+		/// Gets the priority. Lower values indicate higher priority.
 		/// </summary>
-		public Priority Priority { get; }
+		public int Priority { get; }
 
 		/// <summary>
 		/// Returns a value indicating whether the current instance is equal to another instance of the same type.

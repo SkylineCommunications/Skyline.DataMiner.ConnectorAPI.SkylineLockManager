@@ -1,6 +1,4 @@
-﻿using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
-
-namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
+﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 {
 	using System.Threading.Tasks;
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -26,13 +24,15 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 
 			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
 
+			int lowPriority = 5;
+
 			// Act
-			lockManagerConnectorApi.ListenForLockRequestsWithHigherPriorityThan(new ObjectIdAndPriority("objectId", Priority.Medium));
+			lockManagerConnectorApi.ListenForLockRequestsWithHigherPriorityThan(new ObjectIdAndPriority("objectId", lowPriority));
 
 			bool higherPrioLockRequestCameIn = false;
 			lockManagerConnectorApi.HigherPriorityLockRequestReceived += (sender, args) =>
 			{
-				if (args.LockObjectRequest.ObjectId == "objectId" && args.LockObjectRequest.Priority > Priority.Medium)
+				if (args.LockObjectRequest.ObjectId == "objectId" && args.LockObjectRequest.Priority > lowPriority)
 				{
 					higherPrioLockRequestCameIn = true;
 				}
@@ -41,7 +41,7 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 			lockManagerMock.InvokeHigherPriorityLockRequestReceived(new LockObjectRequest
 			{
 				ObjectId = "objectId",
-				Priority = Priority.High,
+				Priority = 1,
 			});
 
 			// Assert
@@ -60,13 +60,15 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 
 			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
 
+			int lowPriority = 5;
+
 			// Act
-			lockManagerConnectorApi.ListenForLockRequestsWithHigherPriorityThan(new ObjectIdAndPriority("objectId", Priority.Medium));
+			lockManagerConnectorApi.ListenForLockRequestsWithHigherPriorityThan(new ObjectIdAndPriority("objectId", lowPriority));
 
 			bool higherPrioLockRequestCameIn = false;
 			lockManagerConnectorApi.HigherPriorityLockRequestReceived += (sender, args) =>
 			{
-				if (args.LockObjectRequest.ObjectId == "objectId" && args.LockObjectRequest.Priority > Priority.Medium)
+				if (args.LockObjectRequest.ObjectId == "objectId" && args.LockObjectRequest.Priority > lowPriority)
 				{
 					higherPrioLockRequestCameIn = true;
 				}
@@ -75,7 +77,7 @@ namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 			lockManagerMock.InvokeHigherPriorityLockRequestReceived(new LockObjectRequest
 			{
 				ObjectId = "objectId",
-				Priority = Priority.Medium,
+				Priority = lowPriority,
 			});
 
 			// Assert

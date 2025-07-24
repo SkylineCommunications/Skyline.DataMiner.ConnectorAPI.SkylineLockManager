@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.Generic;
 	using Newtonsoft.Json;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
 
 	/// <summary>
 	/// Represents a request to lock an object.
@@ -41,10 +40,10 @@
 		public TimeSpan? AutoUnlockTimeSpan { get; set; }
 
 		/// <summary>
-		/// Gets or sets the priority level of the request.
+		/// Gets or sets the priority level of the request. Lower values indicate higher priority.
 		/// </summary>
 		[JsonProperty("Priority")]
-		public Priority Priority { get; set; } = Priority.Medium;
+		public int Priority { get; set; }
 
 		/// <summary>
 		/// Flattens the current request and its linked object requests into a single enumerable sequence.

@@ -39,8 +39,8 @@
 		public DateTime AutoUnlockTimestamp { get; set; }
 
 		/// <summary>
-		/// Gets or sets the priority of the lock.
+		/// Gets or sets the priority of the lock. Lower values indicate higher priority.
 		/// </summary>
-		public Priority Priority { get; set; }
+		public int Priority { get; set; }
 	}
 }

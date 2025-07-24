@@ -85,19 +85,11 @@
 		{
 			string objectIdFromLockRequest = lockObjectRequest.ObjectId;
 			var priorityFromLockRequest = lockObjectRequest.Priority;
-
-			var lowerPriorities = Enum.GetValues(typeof(Priority)).Cast<Priority>().Where(prio => prio < priorityFromLockRequest).ToList();
-
-			foreach (var lowerPriority in lowerPriorities)
+			
+			if (objectIdsAndPriorities.Any(idAndPrio => idAndPrio.ObjectId == objectIdFromLockRequest && priorityFromLockRequest < idAndPrio.Priority /*lower value means higher priority*/))
 			{
-				var objectIdAndPriority = new ObjectIdAndPriority(objectIdFromLockRequest, lowerPriority);
-
-				if (objectIdsAndPriorities.Contains(objectIdAndPriority))
-				{
-					InvokeHigherPriorityLockRequestReceived(lockObjectRequest);
-					break; // No need to check further if we found a match
-				}
-			}
+				InvokeHigherPriorityLockRequestReceived(lockObjectRequest);
+			}	
 		}
 
 		/// <summary>
