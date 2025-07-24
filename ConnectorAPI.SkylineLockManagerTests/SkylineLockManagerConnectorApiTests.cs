@@ -11,6 +11,29 @@
 	[TestClass()]
 	public class SkylineLockManagerConnectorApiTests
 	{
+		[TestMethod()]
+		public void LockObjects_DuplicateObjectIds_ThrowsException()
+		{
+			// Arrange
+			var lockManagerMock = new LockManagerMock();
+
+			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
+
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+
+			// Act
+			var lockObjectsRequests = new[]
+			{
+				new LockObjectRequest { ObjectId = "objectId" },
+				new LockObjectRequest { ObjectId = "objectId" } // Duplicate object ID
+			};
+			
+			// Assert
+			Assert.ThrowsException<ArgumentException>(() => lockManagerConnectorApi.LockObjects(lockObjectsRequests));
+		}
+
 		[TestMethod]
 		public void Dispose_AllMonitorsStopped()
 		{

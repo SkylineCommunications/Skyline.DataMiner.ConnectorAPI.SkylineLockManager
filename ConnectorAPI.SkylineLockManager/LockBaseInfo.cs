@@ -8,7 +8,7 @@
 	/// <remarks>This class is used to encapsulate metadata about a lockable object, such as its unique identifier, 
 	/// a textual description, contextual information, and its priority level. The priority level determines  the
 	/// importance of the lock, where lower values indicate higher priority.</remarks>
-	public class LockBaseInfo
+	public class LockBaseInfo : ILockBaseInfo
 	{
 		/// <summary>
 		/// Gets or sets the id of the object.

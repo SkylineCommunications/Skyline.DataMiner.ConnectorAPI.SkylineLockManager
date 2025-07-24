@@ -3,18 +3,12 @@
 	using System;
 
 	/// <inheritdoc cref="ILockInfo"/>
-	public class LockInfo : ILockInfo
+	public class LockInfo : LockBaseInfo, ILockInfo
 	{
-		/// <inheritdoc cref="ILockInfo.ObjectId"/>
-		public string ObjectId { get; set; }
-
-		/// <inheritdoc cref="ILockInfo.IsGranted"/>
+		/// <inheritdoc/>
 		public bool IsGranted { get; set; }
 
-		/// <inheritdoc cref="ILockInfo.LockHolderInfo"/>
-		public string LockHolderInfo { get; set; }
-
-		/// <inheritdoc cref="ILockInfo.AutoUnlockTimestamp"/>
+		/// <inheritdoc/>
 		public DateTime AutoUnlockTimestamp { get; set; }
 	}
 }

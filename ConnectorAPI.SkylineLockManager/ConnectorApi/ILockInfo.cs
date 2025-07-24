@@ -5,18 +5,8 @@
 	/// <summary>
 	/// An interface representing info about a requested lock.
 	/// </summary>
-	public interface ILockInfo
+	public interface ILockInfo : ILockBaseInfo
 	{
-		/// <summary>
-		/// Gets the ID of the object for which lock info is given.
-		/// </summary>
-		string ObjectId { get; }
-
-		/// <summary>
-		/// Gets the information about the holder of the lock for the given object.
-		/// </summary>
-		string LockHolderInfo { get; }
-
 		/// <summary>
 		/// Gets a boolean indicating if the lock was granted or not.
 		/// </summary>

@@ -164,10 +164,7 @@
 		/// <exception cref="ArgumentNullException"/>
 		public ILockObjectsResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null)
 		{
-			if (request == null)
-			{
-				throw new ArgumentNullException(nameof(request));
-			}
+			ValidateRequests(request);
 
 			return LockObjectsInternal(new[] { request }, maxWaitingTime);
 		}
@@ -176,6 +173,8 @@
 		/// <exception cref="ArgumentNullException"/>
 		public ILockObjectsResult LockObjects(IEnumerable<LockObjectRequest> requests, TimeSpan? maxWaitingTime = null)
 		{
+			ValidateRequests(requests.ToArray());
+
 			return LockObjectsInternal(requests, maxWaitingTime);
 		}
 
@@ -259,15 +258,43 @@
 				lockObjectResponses = SendLockObjectRequests(requestsList);
 			}
 
-			var lockInfos = lockObjectResponses.SelectMany(response => response.Flatten()).Select(response => (ILockInfo)new LockInfo
-			{
-				ObjectId = response.ObjectId,
-				LockHolderInfo = response.LockHolderInfo,
-				IsGranted = response.LockIsGranted,
-				AutoUnlockTimestamp = response.AutoUnlockTimestamp,
-			}).ToList();
+			var lockInfosPerObjectId = new Dictionary<string, ILockInfo>();
 
-			return new LockObjectsResult(lockInfos.ToDictionary(li => li.ObjectId), totalWaitingTime);
+			var requestsPerObjectId = requestsList.SelectMany(req => req.Flatten()).ToDictionary(req => req.ObjectId);
+
+			foreach (var response in lockObjectResponses.SelectMany(lor => lor.Flatten()))
+			{
+				var matchingRequest = requestsPerObjectId[response.ObjectId];
+
+				lockInfosPerObjectId.Add(response.ObjectId, new LockInfo
+				{
+					ObjectId = response.ObjectId,
+					ObjectDescription = matchingRequest.ObjectDescription,
+					ContextInfo = response.LockHolderInfo,
+					IsGranted = response.LockIsGranted,
+					AutoUnlockTimestamp = response.AutoUnlockTimestamp,
+					Priority = matchingRequest.Priority
+				});
+			}
+
+			return new LockObjectsResult(lockInfosPerObjectId, totalWaitingTime);
+		}
+
+		private void ValidateRequests(params LockObjectRequest[] requests)
+		{
+			if (requests == null)
+			{
+				throw new ArgumentNullException(nameof(requests));
+			}
+
+			var objectIds = requests.SelectMany(req => req.Flatten()).Select(req => req.ObjectId).ToList();
+
+			var distinctObjectIds = objectIds.Distinct().ToList();
+
+			if (objectIds.Count != distinctObjectIds.Count)
+			{
+				throw new ArgumentException("The provided requests contain duplicate object IDs.", nameof(requests));
+			}
 		}
 
 		private List<LockObjectResponse> LockObjectsWithWait(ICollection<LockObjectRequest> requests, TimeSpan maxWaitingTime, out TimeSpan totalWaitingTime)
