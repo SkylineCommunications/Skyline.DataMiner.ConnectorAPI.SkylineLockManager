@@ -23,6 +23,16 @@
 		/// when multiple threads interact with the stored <see cref="ObjectIdAndPriority"/> instances.</remarks>
 		protected readonly ConcurrentHashSet<ObjectIdAndPriority> objectIdsAndPriorities = new ConcurrentHashSet<ObjectIdAndPriority>();
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="HigherPriorityLockRequestListenerBase"/> class.
+		/// </summary>
+		/// <param name="logger">An optional <see cref="ILogger"/> instance used for logging. If <see langword="null"/>, no logging will be
+		/// performed.</param>
+		protected HigherPriorityLockRequestListenerBase(ILogger logger = null) : base(logger)
+		{
+
+		}
+
 		/// <inheritdoc cref="IHigherPriorityLockRequestListener.HigherPriorityLockRequestReceived"/>
 		public event EventHandler<LockObjectRequestEventArgs> HigherPriorityLockRequestReceived;
 

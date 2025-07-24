@@ -2,7 +2,6 @@
 {
 	using System;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
 	/// <inheritdoc cref="IUnlockListener"/>
@@ -28,7 +27,7 @@
 			parameter = element.GetStandaloneParameter<string>(UnlockUpdates_ParameterId);
 		}
 
-		/// <inheritdoc cref="Listener.StartMonitor()"/>
+		/// <inheritdoc/>
 		protected override void StartMonitor()
 		{
 			Log($"Starting monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
@@ -41,7 +40,7 @@
 			});
 		}
 
-		/// <inheritdoc cref="Listener.StopMonitor()"/>
+		/// <inheritdoc/>
 		protected override void StopMonitor()
 		{
 			Log($"Stopping monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");

@@ -22,6 +22,7 @@
 		/// <remarks>This field is initialized with a unique value when the containing object is created.  It is
 		/// intended to uniquely identify the source within the context of the application.</remarks>
 		protected readonly string sourceId = Guid.NewGuid().ToString();
+
 		private readonly ILogger logger;
 
 		/// <summary>
@@ -134,9 +135,17 @@
 		/// <param name="message">The message to log. Cannot be null or empty.</param>
 		protected void Log(string message)
 		{
+			if (logger == null)
+			{
+				return;
+			}
+
 			string nameOfMethod = new StackTrace().GetFrame(1).GetMethod().Name;
 
-			logger?.Log(nameof(SkylineLockManagerConnectorApi), nameOfMethod, message);
+			lock (logger)
+			{
+				logger.Log(nameof(SkylineLockManagerConnectorApi), nameOfMethod, message);
+			}
 		}
 	}
 }
