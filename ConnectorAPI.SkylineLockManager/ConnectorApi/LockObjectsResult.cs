@@ -12,7 +12,7 @@
 		/// <param name="lockInfosPerObjectId">A dictionary containing lock information for each object ID.</param>
 		/// <param name="totalWaitingTime">The total time spent waiting to acquire the locks.</param>
 		/// <exception cref="ArgumentNullException">Thrown when <paramref name="lockInfosPerObjectId"/> is <c>null</c>.</exception>
-		internal LockObjectsResult(Dictionary<string, ILockInfo> lockInfosPerObjectId, TimeSpan totalWaitingTime)
+		public LockObjectsResult(Dictionary<string, ILockInfo> lockInfosPerObjectId, TimeSpan totalWaitingTime)
 		{
 			LockInfosPerObjectId = lockInfosPerObjectId ?? throw new ArgumentNullException(nameof(lockInfosPerObjectId));
 			TotalWaitingTime = totalWaitingTime;
