@@ -83,7 +83,7 @@
 
 			interAppHandler = new InterAppHandler(connection, element, logger);
 			unlockListener = new UnlockListener(element, logger);
-			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element);
+			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element, logger);
 			this.logger = logger;
 		}
 
@@ -107,7 +107,7 @@
 
 			interAppHandler = new InterAppHandler(connection, element, logger);
 			unlockListener = new UnlockListener(element, logger);
-			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element);
+			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element, logger);
 			this.logger = logger;
 		}
 
