@@ -10,27 +10,19 @@
 	/// importance of the lock, where lower values indicate higher priority.</remarks>
 	public class LockBaseInfo : ILockBaseInfo
 	{
-		/// <summary>
-		/// Gets or sets the id of the object.
-		/// </summary>
+		/// <inheritdoc/>
 		[JsonProperty("ObjectId")]
 		public string ObjectId { get; set; }
 
-		/// <summary>
-		/// Gets or sets the description of the object.
-		/// </summary>
+		/// <inheritdoc/>
 		[JsonProperty("ObjectDescription")]
 		public string ObjectDescription { get; set; }
 
-		/// <summary>
-		/// Gets or sets information about the context.
-		/// </summary>
+		/// <inheritdoc/>
 		[JsonProperty("ContextInfo")]
 		public string ContextInfo { get; set; }
 
-		/// <summary>
-		/// Gets or sets the priority level of the lock. Lower values indicate higher priority.
-		/// </summary>
+		/// <inheritdoc/>
 		[JsonProperty("Priority")]
 		public int Priority { get; set; }
 	}
