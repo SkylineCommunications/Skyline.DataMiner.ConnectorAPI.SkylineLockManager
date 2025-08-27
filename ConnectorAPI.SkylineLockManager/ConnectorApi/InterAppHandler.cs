@@ -115,9 +115,14 @@
 
 		private void Log(string message)
 		{
+			if (logger == null)
+			{
+				return;
+			}
+
 			string nameOfMethod = new StackTrace().GetFrame(1).GetMethod().Name;
 
-			logger?.Log(nameof(SkylineLockManagerConnectorApi), nameOfMethod, message);
+			logger.Log(nameof(SkylineLockManagerConnectorApi), nameOfMethod, message);
 		}
 	}
 }

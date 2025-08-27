@@ -54,7 +54,7 @@
 		/// <param name="logger">The logger used for recording diagnostic and operational information. This parameter cannot be <see
 		/// langword="null"/>.</param>
 		/// <exception cref="ArgumentNullException">Thrown if any of the parameters are <see langword="null"/>.</exception>
-		public SkylineLockManagerConnectorApi(IInterAppHandler interAppHandler, IUnlockListener unlockListener, IHigherPriorityLockRequestListener higherPrioLockRequestListener, ILogger logger = null)
+		internal SkylineLockManagerConnectorApi(IInterAppHandler interAppHandler, IUnlockListener unlockListener, IHigherPriorityLockRequestListener higherPrioLockRequestListener, ILogger logger = null)
 		{
 			this.interAppHandler = interAppHandler ?? throw new ArgumentNullException(nameof(interAppHandler));
 			this.unlockListener = unlockListener ?? throw new ArgumentNullException(nameof(unlockListener));
