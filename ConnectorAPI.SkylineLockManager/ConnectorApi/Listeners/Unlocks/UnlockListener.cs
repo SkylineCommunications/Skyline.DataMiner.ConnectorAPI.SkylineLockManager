@@ -1,7 +1,7 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks
 {
 	using System;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
+	using Microsoft.Extensions.Logging;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
 	/// <inheritdoc cref="IUnlockListener"/>

@@ -3,7 +3,7 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Threading.Tasks;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
+	using Microsoft.Extensions.Logging;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners;
 
 	/// <summary>

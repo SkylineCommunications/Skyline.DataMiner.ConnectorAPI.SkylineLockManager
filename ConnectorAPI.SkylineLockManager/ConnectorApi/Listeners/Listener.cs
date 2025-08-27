@@ -2,7 +2,7 @@
 {
 	using System;
 	using System.Diagnostics;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
+	using Microsoft.Extensions.Logging;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks;
 
@@ -133,7 +133,8 @@
 		/// <remarks>This method captures the name of the calling method and logs it alongside the provided message.
 		/// The logging behavior depends on the implementation of the <c>logger</c> instance.</remarks>
 		/// <param name="message">The message to log. Cannot be null or empty.</param>
-		protected void Log(string message)
+		/// <param name="logLevel">The severity level of the log entry.</param>
+		protected void Log(string message, LogLevel logLevel = LogLevel.Debug)
 		{
 			if (logger == null)
 			{
@@ -144,7 +145,7 @@
 
 			lock (logger)
 			{
-				logger.Log(nameof(SkylineLockManagerConnectorApi), nameOfMethod, message);
+				logger.Log(logLevel, "{className}|{methodName}|{message}", GetType().Name, nameOfMethod, message);
 			}
 		}
 	}

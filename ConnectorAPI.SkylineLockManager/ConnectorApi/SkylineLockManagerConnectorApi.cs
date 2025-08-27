@@ -6,7 +6,7 @@
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Threading.Tasks;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
+	using Microsoft.Extensions.Logging;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.HigherPriorityLockRequests;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages;
@@ -409,11 +409,16 @@
 			return responseMessage.Responses.ToList();
 		}
 
-		private void Log(string message)
+		private void Log(string message, LogLevel logLevel = LogLevel.Debug)
 		{
+			if (logger == null)
+			{
+				return;
+			}
+
 			string nameOfMethod = new StackTrace().GetFrame(1).GetMethod().Name;
 
-			logger?.Log(nameof(SkylineLockManagerConnectorApi), nameOfMethod, message);
+			logger.Log(logLevel, "{className}|{methodName}|{message}", GetType().Name, nameOfMethod, message);
 		}
 	}
 }
