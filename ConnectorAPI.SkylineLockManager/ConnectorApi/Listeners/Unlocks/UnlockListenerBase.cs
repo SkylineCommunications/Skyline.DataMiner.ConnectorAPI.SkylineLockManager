@@ -101,11 +101,6 @@
 					taskCompletionSource.SetResult(result: true);
 				}
 			}
-
-			if (taskCompletionSources.IsEmpty && isListening)
-			{
-				StopListening();
-			}
 		}
 
 		/// <inheritdoc cref="Listener.Dispose(bool)"/>

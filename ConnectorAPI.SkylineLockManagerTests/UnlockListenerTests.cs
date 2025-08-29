@@ -110,7 +110,7 @@
 			Assert.IsTrue(taskCompletedSuccessfully);
 			Assert.IsTrue(unlockDetected);
 			Assert.AreEqual(1, unlockListenerMock.AmountOfTimesMonitorStarted);
-			Assert.AreEqual(1, unlockListenerMock.AmountOfTimesMonitorStopped);
+			Assert.AreEqual(0, unlockListenerMock.AmountOfTimesMonitorStopped);
 		}
 
 		[TestMethod()]
