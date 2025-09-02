@@ -201,11 +201,25 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
 
-			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
-			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
-			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
+			var higherPrioLockRequestListenerMockForContextA = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMockForContextA = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMockForContextA = new InterAppHandlerMock(lockManagerMock);
+			var lockManagerConnectorApiForContextA = new SkylineLockManagerConnectorApi(interappHandlerMockForContextA, unlockListenerMockForContextA, higherPrioLockRequestListenerMockForContextA);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var higherPrioLockRequestListenerMockForContextB = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMockForContextB = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMockForContextB = new InterAppHandlerMock(lockManagerMock);
+			var lockManagerConnectorApiForContextB = new SkylineLockManagerConnectorApi(interappHandlerMockForContextB, unlockListenerMockForContextB, higherPrioLockRequestListenerMockForContextB);
+
+			var higherPrioLockRequestListenerMockForContextC = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMockForContextC = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMockForContextC = new InterAppHandlerMock(lockManagerMock);
+			var lockManagerConnectorApiForContextC = new SkylineLockManagerConnectorApi(interappHandlerMockForContextC, unlockListenerMockForContextC, higherPrioLockRequestListenerMockForContextC);
+
+			var higherPrioLockRequestListenerMockForContextD = new HigherPrioLockRequestListenerMock(lockManagerMock);
+			var unlockListenerMockForContextD = new UnlockListenerMock(lockManagerMock);
+			var interappHandlerMockForContextD = new InterAppHandlerMock(lockManagerMock);
+			var lockManagerConnectorApiForContextD = new SkylineLockManagerConnectorApi(interappHandlerMockForContextD, unlockListenerMockForContextD, higherPrioLockRequestListenerMockForContextD);
 
 			string objectId = "objectId";
 
@@ -216,20 +230,20 @@
 			};
 
 			// Context A locks the object
-			lockManagerConnectorApi.LockObject(lockObjectRequest);
+			lockManagerConnectorApiForContextA.LockObject(lockObjectRequest);
 	
 			// Contexts B,C and D try to lock the same object with a wait
 			var maxWaitingTime = TimeSpan.FromSeconds(10);
 
-			var taskToLockServiceFromContextB = Task.Run(() => lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime));
-			var taskToLockServiceFromContextC = Task.Run(() => lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime));
-			var taskToLockServiceFromContextD = Task.Run(() => lockManagerConnectorApi.LockObject(lockObjectRequest, maxWaitingTime));
+			var taskToLockServiceFromContextB = Task.Run(() => lockManagerConnectorApiForContextB.LockObject(lockObjectRequest, maxWaitingTime));
+			var taskToLockServiceFromContextC = Task.Run(() => lockManagerConnectorApiForContextC.LockObject(lockObjectRequest, maxWaitingTime));
+			var taskToLockServiceFromContextD = Task.Run(() => lockManagerConnectorApiForContextD.LockObject(lockObjectRequest, maxWaitingTime));
 
 			// Context A does some stuff while context B, C and D are waiting
 			Task.Delay(TimeSpan.FromSeconds(2)).Wait();
 
 			// Context A unlocks the object
-			lockManagerConnectorApi.UnlockObject(new UnlockObjectRequest
+			lockManagerConnectorApiForContextA.UnlockObject(new UnlockObjectRequest
 			{
 				ObjectId = objectId,
 			});
@@ -239,7 +253,6 @@
 			var lockObjectResultFromContextB = taskToLockServiceFromContextB.Result;
 			var lockObjectResultFromContextC = taskToLockServiceFromContextC.Result;
 			var lockObjectResultFromContextD = taskToLockServiceFromContextD.Result;
-
 
 			// Assert
 			Assert.AreEqual(1 /*Context A*/ + 3 /*Initial attempt from contexts B,C,D*/ + 3/*Second attempt from contexts B,C,D*/, lockManagerMock.ReceivedLockObjectRequests.Count);
@@ -251,12 +264,12 @@
 			Assert.AreEqual(2, lockInfosFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
 
 			var lockInfoFromContextsThatDidNotGetTheLock = new[] {lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD}
-				.Where(x => x.LockInfosPerObjectId.ContainsKey(objectId) && !x.LockInfosPerObjectId[objectId].IsGranted).ToList();
+				.Where(x => x.LockInfosPerObjectId.TryGetValue(objectId, out var lockInfo) && !lockInfo.IsGranted).ToList();
 
 			Assert.AreEqual(2, lockInfoFromContextsThatDidNotGetTheLock.Count, "Two contexts should not have gotten the lock.");
 
-			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.First().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
-			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.Last().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
+			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.First().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */, "Context that does not get the lock is expected to wait for the max waiting time.");
+			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.Last().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */, "Context that does not get the lock is expected to wait for the max waiting time.");
 		}
 
 		[TestMethod()]
