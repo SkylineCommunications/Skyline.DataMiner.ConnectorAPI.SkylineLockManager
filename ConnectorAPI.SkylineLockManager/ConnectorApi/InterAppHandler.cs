@@ -11,12 +11,14 @@
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
+	using Skyline.DataMiner.Core.InterAppCalls.Common.Shared;
 	using Skyline.DataMiner.Net;
 
 	internal class InterAppHandler : IInterAppHandler
 	{
 		private static readonly int InterAppTimeout_ParameterId = 100;
 		private static readonly int InterAppReceive_ParameterId = 9000000;
+		private static readonly int InterAppResponse_ParameterId = 9000001;
 
 		private readonly IConnection connection;
 		private readonly IDmsElement element;
@@ -70,6 +72,7 @@
 		private T SendMessageWithResponse<T>(Message message) where T : Message
 		{
 			var commands = InterAppCallFactory.CreateNew();
+			commands.ReturnAddress = new ReturnAddress(element.AgentId, element.Id, InterAppResponse_ParameterId);
 			commands.Messages.Add(message);
 
 			Log($"Sending message: {JsonConvert.SerializeObject(message)}");
