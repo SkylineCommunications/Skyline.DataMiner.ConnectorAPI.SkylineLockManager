@@ -30,22 +30,22 @@
 		/// <inheritdoc/>
 		protected override void StartMonitor()
 		{
-			Log($"Starting monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
-
 			parameter.StartValueMonitor(sourceId, (paramValueChange) =>
 			{
 				var unlockedObjectIds = paramValueChange.Value.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
 				ReportUnlockedObjects(unlockedObjectIds);
 			});
+
+			Log($"Started monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
 		}
 
 		/// <inheritdoc/>
 		protected override void StopMonitor()
 		{
-			Log($"Stopping monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
-
 			parameter.StopValueMonitor(sourceId);
+
+			Log($"Stopped monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
 		}
 	}
 }
