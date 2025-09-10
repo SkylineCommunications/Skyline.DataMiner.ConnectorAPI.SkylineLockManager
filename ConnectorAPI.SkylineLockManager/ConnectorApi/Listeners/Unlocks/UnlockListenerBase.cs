@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks
 {
+	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Threading.Tasks;
@@ -43,7 +44,7 @@
 				StartListening();
 			}
 
-			logger.LogInformation("Started listening for unlocks for object '{ObjectId}'.", objectId);
+			Log($"Started listening for unlocks for object '{objectId}'.", LogLevel.Information);
 
 			return unlockTaskCompletionSource.Task;
 		}
@@ -70,7 +71,7 @@
 				taskCompletionSource.TrySetResult(result: false);
 			}
 
-			logger.LogInformation("Stopped listening for unlocks for object '{ObjectId}'.", objectId);
+			Log($"Stopped listening for unlocks for object '{objectId}'.", LogLevel.Information);
 
 			if (taskCompletionSources.IsEmpty && isListening)
 			{

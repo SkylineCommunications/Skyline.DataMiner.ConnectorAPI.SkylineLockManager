@@ -23,10 +23,7 @@
 		/// intended to uniquely identify the source within the context of the application.</remarks>
 		protected readonly string sourceId = Guid.NewGuid().ToString();
 
-		/// <summary>
-		/// Represents the logger instance used for logging messages within the class.
-		/// </summary>
-		protected readonly ILogger logger;
+		private readonly ILogger logger;
 
 		/// <summary>
 		/// Indicates whether the service is currently listening for incoming connections or events.
