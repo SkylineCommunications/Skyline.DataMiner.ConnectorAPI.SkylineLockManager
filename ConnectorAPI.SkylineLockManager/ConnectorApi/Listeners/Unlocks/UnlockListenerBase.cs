@@ -43,6 +43,8 @@
 				StartListening();
 			}
 
+			logger.LogInformation("Started listening for unlocks for object '{ObjectId}'.", objectId);
+
 			return unlockTaskCompletionSource.Task;
 		}
 
@@ -67,6 +69,8 @@
 				// Make sure the task listening to this TaskCompletionSource is completed.
 				taskCompletionSource.TrySetResult(result: false);
 			}
+
+			logger.LogInformation("Stopped listening for unlocks for object '{ObjectId}'.", objectId);
 
 			if (taskCompletionSources.IsEmpty && isListening)
 			{
