@@ -1,11 +1,9 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi
 {
 	using System;
-	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
-	using System.Threading.Tasks;
 	using Microsoft.Extensions.Logging;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.HigherPriorityLockRequests;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks;
@@ -17,7 +15,7 @@
 	using Skyline.DataMiner.Net;
 
 	/// <inheritdoc cref="ISkylineLockManagerConnectorApi"/>
-	public class SkylineLockManagerConnectorApi : ISkylineLockManagerConnectorApi
+	public partial class SkylineLockManagerConnectorApi : ISkylineLockManagerConnectorApi
 	{
 		private readonly IInterAppHandler interAppHandler;
 		private readonly IUnlockListener unlockListener;
@@ -299,87 +297,7 @@
 
 		private List<LockObjectResponse> LockObjectsWithWait(ICollection<LockObjectRequest> requests, TimeSpan maxWaitingTime, out TimeSpan totalWaitingTime)
 		{
-			if (requests == null)
-			{
-				throw new ArgumentNullException(nameof(requests));
-			}
-
-			if (maxWaitingTime <= TimeSpan.Zero)
-			{
-				throw new ArgumentOutOfRangeException(nameof(maxWaitingTime), "Max waiting time must be greater than zero.");
-			}
-
-			var initialLockObjectResponses = SendLockObjectRequests(requests);
-
-			var mostRecentResponsePerRequest = new ConcurrentDictionary<LockObjectRequest, LockObjectResponse>();
-
-			foreach (var response in initialLockObjectResponses)
-			{
-				var request = requests.Single(req => req.ObjectId == response.ObjectId);
-
-				mostRecentResponsePerRequest[request] = response;
-			}
-
-			var tasksToWaitFor = new List<Task>();
-
-			var notGrantedRequests = mostRecentResponsePerRequest.Where(kvp => !kvp.Value.LockIsGranted).ToList();
-
-			var stopwatch = Stopwatch.StartNew();
-
-			foreach (var kvp in notGrantedRequests)
-			{
-				var taskToWait = Task.Run<bool>(() =>
-				{
-					var remainingWaitingTime = maxWaitingTime;
-
-					var lockObjectRequest = kvp.Key;
-
-					var notAvailableObjectIds = kvp.Value.Flatten().Where(response => !response.LockIsAvailable).Select(response => response.ObjectId).ToList();
-
-					while(notAvailableObjectIds.Count > 0 && remainingWaitingTime > TimeSpan.Zero)
-					{
-						var tasksToWaitForObjectUnlocks = unlockListener.StartListeningForUnlocks(notAvailableObjectIds);
-
-						var stopwatchForUnlocks = Stopwatch.StartNew();
-
-						bool objectsGotUnlocked = Task.WaitAll(tasksToWaitForObjectUnlocks.Values.ToArray(), remainingWaitingTime) && tasksToWaitForObjectUnlocks.Values.All(t => t.Result);
-
-						stopwatchForUnlocks.Stop();
-						remainingWaitingTime -= stopwatchForUnlocks.Elapsed;
-
-						if (objectsGotUnlocked)
-						{
-							mostRecentResponsePerRequest[lockObjectRequest] = SendLockObjectRequest(lockObjectRequest);
-
-							if (mostRecentResponsePerRequest[lockObjectRequest].LockIsGranted)
-							{
-								return true;
-							}
-							else
-							{
-								notAvailableObjectIds = mostRecentResponsePerRequest[lockObjectRequest].Flatten().Where(response => !response.LockIsAvailable).Select(response => response.ObjectId).ToList();
-							}
-						}
-						else
-						{
-							return false;
-						}
-					}
-
-					return !notAvailableObjectIds.Any();
-				});
-
-				tasksToWaitFor.Add(taskToWait);
-			}
-				
-			Task.WaitAll(tasksToWaitFor.ToArray(), maxWaitingTime);
-
-			stopwatch.Stop();
-			totalWaitingTime = stopwatch.Elapsed;
-
-			unlockListener.StopListeningForUnlocks(requests.SelectMany(req => req.Flatten()).Select(req => req.ObjectId).ToList());
-
-			return mostRecentResponsePerRequest.Select(kvp => kvp.Value).ToList();
+			return Helper.LockObjectsWithWait(this, requests, maxWaitingTime, out totalWaitingTime);
 		}
 
 		private LockObjectResponse SendLockObjectRequest(LockObjectRequest request)

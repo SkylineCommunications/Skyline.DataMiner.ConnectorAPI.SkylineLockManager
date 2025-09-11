@@ -1,13 +1,12 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks
 {
-	using System;
 	using System.Collections.Generic;
 	using System.Threading.Tasks;
 
 	/// <summary>
 	/// Represents an object responsible for listening for unlock events.
 	/// </summary>
-	public interface IUnlockListener : IDisposable
+	public interface IUnlockListener : IListener
 	{
 		/// <summary>
 		/// Start listening for unlock events for a specific object ID.

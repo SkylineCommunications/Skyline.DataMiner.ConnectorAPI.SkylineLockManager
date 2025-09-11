@@ -3,7 +3,6 @@
 	using System;
 	using System.Diagnostics;
 	using Microsoft.Extensions.Logging;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks;
 
 	/// <summary>
@@ -14,7 +13,7 @@
 	/// cref="StopMonitor"/> methods to define the specific monitoring behavior. The class also implements the <see
 	/// cref="IDisposable"/>  interface to ensure proper resource cleanup.  This class is not thread-safe. Derived classes
 	/// should ensure thread safety if required.</remarks>
-	public abstract class Listener : IDisposable
+	public abstract class Listener : IListener
 	{
 		/// <summary>
 		/// Represents a unique identifier for the source, generated as a new GUID string.
@@ -24,13 +23,6 @@
 		protected readonly string sourceId = Guid.NewGuid().ToString();
 
 		private readonly ILogger logger;
-
-		/// <summary>
-		/// Indicates whether the service is currently listening for incoming connections or events.
-		/// </summary>
-		/// <remarks>This property is intended for use within derived classes to check or manage the listening
-		/// state.</remarks>
-		protected bool isListening;
 
 		/// <summary>
 		/// Indicates whether the object has been disposed.
@@ -50,6 +42,60 @@
 		protected Listener(ILogger logger = null)
 		{
 			this.logger = logger;
+		}
+
+		/// <summary>
+		/// Indicates whether the service is currently listening for incoming connections or events.
+		/// </summary>
+		/// <remarks>This property is intended for use within derived classes to check or manage the listening
+		/// state.</remarks>
+		public bool IsListening { get; private set; }
+
+		/// <summary>
+		/// Starts the listening process if it is not already active.
+		/// </summary>
+		/// <remarks>This method ensures that the listening process is initiated only once,  preventing re-entrancy by
+		/// checking the current state. If the process is  already active or in the process of starting, the method exits
+		/// without  performing any action.</remarks>
+		public void StartListening()
+		{
+			if (IsListening || startingListen)
+			{
+				// Avoid re-entrancy
+				return;
+			}
+
+			startingListen = true;
+
+			Log("Starting monitor...", LogLevel.Debug);
+
+			StartMonitor();
+
+			Log("Started monitor", LogLevel.Debug);
+
+			IsListening = true;
+			startingListen = false;
+		}
+
+		/// <summary>
+		/// Stops the listening process if it is currently active.
+		/// </summary>
+		/// <remarks>This method ensures that the listening process is stopped safely, avoiding re-entrancy issues. It
+		/// has no effect if the listening process is not active.</remarks>
+		public void StopListening()
+		{
+			if (!IsListening || stoppingListen)
+			{
+				// Avoid re-entrancy
+				return;
+			}
+
+			stoppingListen = true;
+
+			StopMonitor();
+
+			IsListening = false;
+			stoppingListen = false;
 		}
 
 		/// <summary>
@@ -83,49 +129,6 @@
 		/// <remarks>This method should be called when the instance is no longer needed to ensure proper cleanup of
 		/// resources. If the instance is used after calling this method, it may result in undefined behavior.</remarks>
 		protected abstract void Dispose(bool disposing);
-
-		/// <summary>
-		/// Starts the listening process if it is not already active.
-		/// </summary>
-		/// <remarks>This method ensures that the listening process is initiated only once,  preventing re-entrancy by
-		/// checking the current state. If the process is  already active or in the process of starting, the method exits
-		/// without  performing any action.</remarks>
-		protected void StartListening()
-		{
-			if (isListening || startingListen)
-			{
-				// Avoid re-entrancy
-				return;
-			}
-
-			startingListen = true;
-
-			StartMonitor();
-
-			isListening = true;
-			startingListen = false;
-		}
-
-		/// <summary>
-		/// Stops the listening process if it is currently active.
-		/// </summary>
-		/// <remarks>This method ensures that the listening process is stopped safely, avoiding re-entrancy issues. It
-		/// has no effect if the listening process is not active.</remarks>
-		protected void StopListening()
-		{
-			if (!isListening || stoppingListen)
-			{
-				// Avoid re-entrancy
-				return;
-			}
-
-			stoppingListen = true;
-
-			StopMonitor();
-
-			isListening = false;
-			stoppingListen = false;
-		}
 
 		/// <summary>
 		/// Logs a message along with the name of the calling method and the current context.

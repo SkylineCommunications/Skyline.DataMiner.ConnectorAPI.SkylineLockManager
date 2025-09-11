@@ -70,7 +70,7 @@
 				priorities.UnionWith(objectIdAndPrioritiesToListenFor.Value);
 			}
 
-			if (!objectIdsAndPriorities.IsEmpty && !isListening)
+			if (!objectIdsAndPriorities.IsEmpty && !IsListening)
 			{
 				StartListening();
 			}
@@ -116,7 +116,7 @@
 				}
 			}
 
-			if (objectIdsAndPriorities.IsEmpty && isListening)
+			if (objectIdsAndPriorities.IsEmpty && IsListening)
 			{
 				StopListening();
 			}

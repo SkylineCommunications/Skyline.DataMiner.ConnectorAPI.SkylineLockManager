@@ -39,7 +39,7 @@
 		{
 			var unlockTaskCompletionSource = taskCompletionSources.GetOrAdd(objectId, _ => new TaskCompletionSource<bool>());
 
-			if (!isListening)
+			if (!IsListening)
 			{
 				StartListening();
 			}
@@ -73,7 +73,7 @@
 
 			Log($"Stopped listening for unlocks for object '{objectId}'.", LogLevel.Information);
 
-			if (taskCompletionSources.IsEmpty && isListening)
+			if (taskCompletionSources.IsEmpty && IsListening)
 			{
 				StopListening();
 			}

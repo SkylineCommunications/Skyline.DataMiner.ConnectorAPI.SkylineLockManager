@@ -255,7 +255,7 @@
 			var lockObjectResultFromContextD = taskToLockServiceFromContextD.Result;
 
 			// Assert
-			Assert.AreEqual(1 /*Context A*/ + 3 /*Initial attempt from contexts B,C,D*/ + 3/*Second attempt from contexts B,C,D*/, lockManagerMock.ReceivedLockObjectRequests.Count);
+			Assert.AreEqual(1 /*Context A*/ + 3 /*Initial attempt from contexts B,C,D*/ + 3/*Second attempt (after starting listening) from contexts B,C,D*/ + 3/*Third attempt (after unlock detected) from contexts B,C,D*/, lockManagerMock.ReceivedLockObjectRequests.Count);
 
 			var lockInfosFromContextThatGotTheLock = new[] { lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD }
 				.Where(x => x.LockInfosPerObjectId.ContainsKey(objectId) && x.LockInfosPerObjectId[objectId].IsGranted).ToList();
