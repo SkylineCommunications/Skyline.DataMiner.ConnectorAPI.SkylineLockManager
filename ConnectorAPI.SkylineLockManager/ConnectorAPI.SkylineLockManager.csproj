@@ -18,7 +18,6 @@
     <Authors>SkylineCommunications</Authors>
     <Company>Skyline Communications</Company>
     <Description>Provides an API to communicate with the Skyline Lock Manager connector</Description>
-    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
