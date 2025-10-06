@@ -25,12 +25,12 @@
 		private readonly ILogger logger;
 		private readonly Lazy<TimeSpan> timeout;
 
-		public InterAppHandler(IConnection connection, IDmsElement element, ILogger logger = null)
+		public InterAppHandler(IConnection connection, IDmsElement element, ILogger<InterAppHandler> logger)
 		{
 			timeout = new Lazy<TimeSpan>(GetTimeout);
 			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			this.element = element ?? throw new ArgumentNullException(nameof(element));
-			this.logger = logger;
+			this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		}
 
 		private TimeSpan Timeout => timeout.Value;

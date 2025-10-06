@@ -5,6 +5,7 @@
 	using System.Diagnostics;
 	using System.Linq;
 	using Microsoft.Extensions.Logging;
+	using Microsoft.Extensions.Logging.Abstractions;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.HigherPriorityLockRequests;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages;
@@ -17,10 +18,13 @@
 	/// <inheritdoc cref="ISkylineLockManagerConnectorApi"/>
 	public partial class SkylineLockManagerConnectorApi : ISkylineLockManagerConnectorApi
 	{
+		private static readonly ActivitySource activitySource = new ActivitySource("Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.SkylineLockManagerConnectorApi");
+
+		private readonly ILogger<SkylineLockManagerConnectorApi> logger;
+
 		private readonly IInterAppHandler interAppHandler;
 		private readonly IUnlockListener unlockListener;
 		private readonly IHigherPriorityLockRequestListener higherPrioLockRequestListener;
-		private readonly ILogger logger;
 
 		private bool disposedValue;
 
@@ -49,15 +53,16 @@
 		/// langword="null"/>.</param>
 		/// <param name="unlockListener">The listener that responds to unlock events. This parameter cannot be <see langword="null"/>.</param>
 		/// <param name="higherPrioLockRequestListener">The listener that handles requests for higher-priority locks. This parameter cannot be <see langword="null"/>.</param>
-		/// <param name="logger">The logger used for recording diagnostic and operational information. This parameter cannot be <see
-		/// langword="null"/>.</param>
+		/// <param name="loggerFactory">An optional logger factory.</param>
 		/// <exception cref="ArgumentNullException">Thrown if any of the parameters are <see langword="null"/>.</exception>
-		internal SkylineLockManagerConnectorApi(IInterAppHandler interAppHandler, IUnlockListener unlockListener, IHigherPriorityLockRequestListener higherPrioLockRequestListener, ILogger logger = null)
+		internal SkylineLockManagerConnectorApi(IInterAppHandler interAppHandler, IUnlockListener unlockListener, IHigherPriorityLockRequestListener higherPrioLockRequestListener, ILoggerFactory loggerFactory = null)
 		{
+			loggerFactory = loggerFactory ?? new NullLoggerFactory();
+			this.logger = loggerFactory.CreateLogger<SkylineLockManagerConnectorApi>();
+
 			this.interAppHandler = interAppHandler ?? throw new ArgumentNullException(nameof(interAppHandler));
 			this.unlockListener = unlockListener ?? throw new ArgumentNullException(nameof(unlockListener));
 			this.higherPrioLockRequestListener = higherPrioLockRequestListener ?? throw new ArgumentNullException(nameof(higherPrioLockRequestListener));
-			this.logger = logger;
 		}
 
 		/// <summary>
@@ -66,11 +71,11 @@
 		/// <param name="connection">Connection used to communicate with the Lock Manager element.</param>
 		/// <param name="agentId">ID of the agent on which the Lock Manager element is hosted.</param>
 		/// <param name="elementId">ID of the Lock Manager element.</param>
-		/// <param name="logger">Object that is used to log info about locks.</param>
+		/// <param name="loggerFactory">An optional logger factory.</param>
 		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
-		public SkylineLockManagerConnectorApi(IConnection connection, int agentId, int elementId, ILogger logger = null)
+		public SkylineLockManagerConnectorApi(IConnection connection, int agentId, int elementId, ILoggerFactory loggerFactory = null)
 		{
 			var element = connection.GetDms().GetElement(new DmsElementId(agentId, elementId)) ?? throw new ArgumentException($"Unable to find an element with ID {agentId}\\{elementId}", nameof(elementId));
 
@@ -79,10 +84,12 @@
 				throw new InvalidOperationException($"The element with ID {agentId}\\{elementId} is not active.");
 			}
 
-			interAppHandler = new InterAppHandler(connection, element, logger);
-			unlockListener = new UnlockListener(element, logger);
-			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element, logger);
-			this.logger = logger;
+			loggerFactory = loggerFactory ?? new NullLoggerFactory();
+			this.logger = loggerFactory.CreateLogger<SkylineLockManagerConnectorApi>();
+
+			interAppHandler = new InterAppHandler(connection, element, loggerFactory.CreateLogger<InterAppHandler>());
+			unlockListener = new UnlockListener(element, loggerFactory.CreateLogger<UnlockListener>());
+			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element, loggerFactory.CreateLogger<HigherPriorityLockRequestListener>());
 		}
 
 		/// <summary>
@@ -90,11 +97,11 @@
 		/// </summary>
 		/// <param name="connection">Connection used to communicate with the Lock Manager element.</param>
 		/// <param name="elementName">Name of the Lock Manager element.</param>
-		/// <param name="logger">Object that is used to log info about locks.</param>
+		/// <param name="loggerFactory">An optional logger factory.</param>
 		/// <exception cref="ArgumentNullException">Thrown when the provided connection or the element is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">Thrown when provided element id or agent id is negative.</exception>
 		/// <exception cref="InvalidOperationException">Thrown when described element is inactive.</exception>
-		public SkylineLockManagerConnectorApi(IConnection connection, string elementName, ILogger logger = null)
+		public SkylineLockManagerConnectorApi(IConnection connection, string elementName, ILoggerFactory loggerFactory = null)
 		{
 			var element = connection.GetDms().GetElement(elementName) ?? throw new ArgumentException($"Unable to find an element with Name {elementName}", nameof(elementName));
 
@@ -103,10 +110,12 @@
 				throw new InvalidOperationException($"The element with name {elementName} is not active.");
 			}
 
-			interAppHandler = new InterAppHandler(connection, element, logger);
-			unlockListener = new UnlockListener(element, logger);
-			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element, logger);
-			this.logger = logger;
+			loggerFactory = loggerFactory ?? new NullLoggerFactory();
+			this.logger = loggerFactory.CreateLogger<SkylineLockManagerConnectorApi>();
+
+			interAppHandler = new InterAppHandler(connection, element, loggerFactory.CreateLogger<InterAppHandler>());
+			unlockListener = new UnlockListener(element, loggerFactory.CreateLogger<UnlockListener>());
+			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element, loggerFactory.CreateLogger<HigherPriorityLockRequestListener>());
 		}
 
 		/// <inheritdoc/>
@@ -140,7 +149,10 @@
 		/// <inheritdoc/>
 		public void ListenForLockRequestsWithHigherPriorityThan(ICollection<KeyValuePair<string, ICollection<int>>> objectIdsAndPrioritiesToStartListeningFor)
 		{
-			higherPrioLockRequestListener.ListenForLockRequestsWithHigherPriorityThan(objectIdsAndPrioritiesToStartListeningFor);
+			using (activitySource.StartActivity())
+			{
+				higherPrioLockRequestListener.ListenForLockRequestsWithHigherPriorityThan(objectIdsAndPrioritiesToStartListeningFor);
+			}
 		}
 
 		/// <inheritdoc/>
@@ -155,16 +167,19 @@
 		/// <inheritdoc/>
 		public void StopListeningForLockRequestsWithHigherPriorityThan(ICollection<KeyValuePair<string, ICollection<int>>> objectIdsAndPrioritiesToStopListeningFor)
 		{
-			higherPrioLockRequestListener.StopListeningForLockRequestsWithHigherPriorityThan(objectIdsAndPrioritiesToStopListeningFor);
+			using (activitySource.StartActivity())
+			{
+				higherPrioLockRequestListener.StopListeningForLockRequestsWithHigherPriorityThan(objectIdsAndPrioritiesToStopListeningFor);
+			}
 		}
 
 		/// <inheritdoc/>
 		/// <exception cref="ArgumentNullException"/>
 		public ILockObjectsResult LockObject(LockObjectRequest request, TimeSpan? maxWaitingTime = null)
-		{
+		{	
 			ValidateRequests(request);
 
-			return LockObjectsInternal(new[] { request }, maxWaitingTime);
+			return LockObjectsInternal(new[] { request }, maxWaitingTime);		
 		}
 
 		/// <inheritdoc/>
@@ -189,18 +204,21 @@
 		{
 			if (requests is null) throw new ArgumentNullException(nameof(requests));
 
-			var requestsList = requests.ToList();
-
-			if (!requestsList.Any()) return;
-
-			var message = new UnlockObjectsRequestsMessage
+			using (logger.BeginScope(requests.Select(req => new KeyValuePair<string, object>("ObjectId", req?.ObjectId))))
 			{
-				Requests = requestsList,
-			};
+				var requestsList = requests.ToList();
 
-			interAppHandler.SendUnlockObjectsRequestsMessage(message);
+				if (!requestsList.Any()) return;
 
-			Log($"Unlocked objects {string.Join(", ", requestsList.Select(r => r.ObjectId))}");
+				var message = new UnlockObjectsRequestsMessage
+				{
+					Requests = requestsList,
+				};
+
+				interAppHandler.SendUnlockObjectsRequestsMessage(message);
+
+				logger.LogInformation(LogEvents.UnlockRequest, "Unlocked objects {ObjectIds}", String.Join(", ", requestsList.Select(r => r.ObjectId)));
+			}
 		}
 
 		/// <inheritdoc/>
@@ -233,49 +251,55 @@
 
 		private LockObjectsResult LockObjectsInternal(IEnumerable<LockObjectRequest> requests, TimeSpan? maxWaitingTime)
 		{
-			if (requests == null)
+			using (activitySource.StartActivity())
 			{
-				throw new ArgumentNullException(nameof(requests));
-			}
-
-			var requestsList = requests.ToList();
-			if (!requestsList.Any())
-			{
-				return LockObjectsResult.Empty();
-			}
-
-			List<LockObjectResponse> lockObjectResponses;
-			TimeSpan totalWaitingTime = TimeSpan.Zero;
-
-			if (maxWaitingTime.HasValue && maxWaitingTime.Value > TimeSpan.Zero)
-			{
-				lockObjectResponses = LockObjectsWithWait(requestsList, maxWaitingTime.Value, out totalWaitingTime);
-			}
-			else
-			{
-				lockObjectResponses = SendLockObjectRequests(requestsList);
-			}
-
-			var lockInfosPerObjectId = new Dictionary<string, ILockInfo>();
-
-			var requestsPerObjectId = requestsList.SelectMany(req => req.Flatten()).ToDictionary(req => req.ObjectId);
-
-			foreach (var response in lockObjectResponses.SelectMany(lor => lor.Flatten()))
-			{
-				var matchingRequest = requestsPerObjectId[response.ObjectId];
-
-				lockInfosPerObjectId.Add(response.ObjectId, new LockInfo
+				if (requests == null)
 				{
-					ObjectId = response.ObjectId,
-					ObjectDescription = matchingRequest.ObjectDescription,
-					ContextInfo = response.LockHolderInfo,
-					IsGranted = response.LockIsGranted,
-					AutoUnlockTimestamp = response.AutoUnlockTimestamp,
-					Priority = matchingRequest.Priority
-				});
-			}
+					throw new ArgumentNullException(nameof(requests));
+				}
 
-			return new LockObjectsResult(lockInfosPerObjectId, totalWaitingTime);
+				using (logger.BeginScope(requests.Select(req => new KeyValuePair<string, object>("ObjectId", req?.ObjectId))))
+				{
+					var requestsList = requests.ToList();
+					if (!requestsList.Any())
+					{
+						return LockObjectsResult.Empty();
+					}
+
+					List<LockObjectResponse> lockObjectResponses;
+					TimeSpan totalWaitingTime = TimeSpan.Zero;
+
+					if (maxWaitingTime.HasValue && maxWaitingTime.Value > TimeSpan.Zero)
+					{
+						lockObjectResponses = LockObjectsWithWait(requestsList, maxWaitingTime.Value, out totalWaitingTime);
+					}
+					else
+					{
+						lockObjectResponses = SendLockObjectRequests(requestsList);
+					}
+
+					var lockInfosPerObjectId = new Dictionary<string, ILockInfo>();
+
+					var requestsPerObjectId = requestsList.SelectMany(req => req.Flatten()).ToDictionary(req => req.ObjectId);
+
+					foreach (var response in lockObjectResponses.SelectMany(lor => lor.Flatten()))
+					{
+						var matchingRequest = requestsPerObjectId[response.ObjectId];
+
+						lockInfosPerObjectId.Add(response.ObjectId, new LockInfo
+						{
+							ObjectId = response.ObjectId,
+							ObjectDescription = matchingRequest.ObjectDescription,
+							ContextInfo = response.LockHolderInfo,
+							IsGranted = response.LockIsGranted,
+							AutoUnlockTimestamp = response.AutoUnlockTimestamp,
+							Priority = matchingRequest.Priority
+						});
+					}
+
+					return new LockObjectsResult(lockInfosPerObjectId, totalWaitingTime);
+				}
+			}
 		}
 
 		private void ValidateRequests(params LockObjectRequest[] requests)
@@ -320,23 +344,11 @@
 				Requests = requestsList,
 			};
 
-			Log($"Requesting locks for {string.Join(", ", requestsList.Select(r => r.ObjectId))}");
+			logger.LogInformation(LogEvents.LockRequest, "Requesting locks for {ObjectIds}", String.Join(", ", requestsList.Select(r => r.ObjectId)).ToList());
 
 			var responseMessage = interAppHandler.SendLockObjectsRequestsMessage(lockObjectsRequestsMessage);
 
 			return responseMessage.Responses.ToList();
-		}
-
-		private void Log(string message, LogLevel logLevel = LogLevel.Debug)
-		{
-			if (logger == null)
-			{
-				return;
-			}
-
-			string nameOfMethod = new StackTrace().GetFrame(1).GetMethod().Name;
-
-			logger.Log(logLevel, "{className}|{methodName}|{message}", GetType().Name, nameOfMethod, message);
 		}
 	}
 }

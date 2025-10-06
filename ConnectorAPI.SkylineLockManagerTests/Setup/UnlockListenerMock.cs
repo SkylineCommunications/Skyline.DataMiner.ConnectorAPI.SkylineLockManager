@@ -1,10 +1,12 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup
 {
+	using Microsoft.Extensions.Logging.Abstractions;
+	using Microsoft.Extensions.Logging.Testing;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks;
 
 	internal class UnlockListenerMock : UnlockListenerBase
 	{
-		public UnlockListenerMock(LockManagerMock lockManagerMock)
+		public UnlockListenerMock(LockManagerMock lockManagerMock) : base(new NullLogger<UnlockListenerBase>())
 		{
 			LockManagerMock = lockManagerMock ?? throw new ArgumentNullException(nameof(lockManagerMock));
 		}

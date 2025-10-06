@@ -17,7 +17,7 @@
 		/// <param name="element">The DMS element used to retrieve the standalone parameter. This parameter cannot be <see langword="null"/>.</param>
 		/// <param name="logger">An optional logger.</param>
 		/// <exception cref="ArgumentNullException">Thrown if <paramref name="element"/> is <see langword="null"/>.</exception>
-		internal UnlockListener(IDmsElement element, ILogger logger = null) : base(logger)
+		internal UnlockListener(IDmsElement element, ILogger<UnlockListener> logger) : base(logger)
 		{
 			if (element == null)
 			{

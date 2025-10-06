@@ -20,7 +20,7 @@
 		/// requests. Cannot be <see langword="null"/>.</param>
 		/// <param name="logger">An optional logger.</param>
 		/// <exception cref="ArgumentNullException">Thrown if <paramref name="element"/> is <see langword="null"/>.</exception>
-		public HigherPriorityLockRequestListener(IDmsElement element, ILogger logger = null) : base(logger)
+		public HigherPriorityLockRequestListener(IDmsElement element, ILogger<HigherPriorityLockRequestListener> logger) : base(logger)
 		{
 			if (element == null)
 			{

@@ -1,12 +1,13 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup
 {
+	using Microsoft.Extensions.Logging.Abstractions;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.HigherPriorityLockRequests;
 
 	internal class HigherPrioLockRequestListenerMock : HigherPriorityLockRequestListenerBase
 	{
 		private readonly LockManagerMock lockManager;
 
-		public HigherPrioLockRequestListenerMock(LockManagerMock lockManager)
+		public HigherPrioLockRequestListenerMock(LockManagerMock lockManager) : base(new NullLogger<HigherPriorityLockRequestListenerBase>())
 		{
 			this.lockManager = lockManager ?? throw new ArgumentNullException(nameof(lockManager));
 		}
@@ -14,7 +15,6 @@
 		public int AmountOfTimesMonitorStarted { get; private set; } = 0;
 
 		public int AmountOfTimesMonitorStopped { get; private set; } = 0;
-
 
 		protected override void StartMonitor()
 		{

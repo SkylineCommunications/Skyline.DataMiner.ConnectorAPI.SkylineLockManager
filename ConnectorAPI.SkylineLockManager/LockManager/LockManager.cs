@@ -2,12 +2,19 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Linq;
+	using Microsoft.Extensions.Logging;
+	using Microsoft.Extensions.Logging.Abstractions;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
 
 	/// <inheritdoc cref="ILockManager"/>
-	public class LockManager : ILockManager
+	public partial class LockManager : ILockManager
 	{
+		private static readonly ActivitySource activitySource = new ActivitySource("Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager");
+
+		private readonly ILogger<LockManager> logger;
+
 		/// <summary>
 		/// Represents a collection of objects that are locked, keyed by their unique identifiers.
 		/// </summary>
@@ -21,9 +28,11 @@
 		/// </summary>
 		/// <param name="lockedObjects">An optional dictionary containing the initial set of locked objects, where the key is the object identifier and
 		/// the value is the corresponding <see cref="LockedObject"/>. If null, an empty dictionary is used.</param>
-		public LockManager(IDictionary<string, LockedObject> lockedObjects = null)
+		/// <param name="logger">An optional logger.</param>
+		public LockManager(IDictionary<string, LockedObject> lockedObjects = null, ILogger<LockManager> logger = null)
 		{
 			this.lockedObjects = lockedObjects ?? new Dictionary<string, LockedObject>();
+			this.logger = logger ?? new NullLogger<LockManager>();
 		}
 
 		/// <inheritdoc cref="ILockManager.DefaultAutoLockReleaseTimeSpan"/>
@@ -36,74 +45,91 @@
 
 			var objectIdsToUnlock = lockedObjects.Where(lo => lo.Value.AutoUnlockTimestamp < now).Select(lo => lo.Key).ToList();
 
+			logger.LogInformation("Unlocking {Count} expired locks: {ObjectIds}", objectIdsToUnlock.Count, String.Join(", ", objectIdsToUnlock));
+
 			foreach (var objectIdToUnlock in objectIdsToUnlock)
 			{
-				lockedObjects.Remove(objectIdToUnlock);
+				UnlockObject(objectIdToUnlock, unlockLinkedObjects: true);
 			}
 		}
 
 		/// <inheritdoc cref="ILockManager.RequestLock(LockObjectRequest)"/>
 		public virtual LockObjectResponse RequestLock(LockObjectRequest lockObjectRequest)
 		{
-			lock (lockedObjects)
+			using (activitySource.StartActivity())
 			{
-				SetAutoUnlockTimeSpan(lockObjectRequest);
-
-				var lockObjectResponse = CheckLockAvailability(lockObjectRequest);
-
-				var individualResponses = lockObjectResponse.Flatten().ToList();
-
-				bool allLocksAreAvailable = !individualResponses.Any(lockRequestResult => !lockRequestResult.LockIsAvailable);
-				if (allLocksAreAvailable)
+				lock (lockedObjects)
 				{
-					LockObjects(lockObjectRequest);
-					individualResponses.ForEach(ir => ir.LockIsGranted = true);
-				}
-				else
-				{
-					// If one or more locks are not available, then none of the locks should be granted.
-					individualResponses.ForEach(ir => ir.LockIsGranted = false);
-				}
+					SetAutoUnlockTimeSpan(lockObjectRequest);
 
-				return lockObjectResponse;
-			}	
+					var lockObjectResponse = CheckLockAvailability(lockObjectRequest);
+
+					var individualResponses = lockObjectResponse.Flatten().ToList();
+
+					var unavailableLocks = individualResponses.Where(lockRequestResult => !lockRequestResult.LockIsAvailable).ToList();
+
+					bool allLocksAreAvailable = unavailableLocks.Count == 0;
+					if (allLocksAreAvailable)
+					{
+						LockObjects(lockObjectRequest);
+						individualResponses.ForEach(ir => ir.LockIsGranted = true);
+					}
+					else
+					{
+						logger.LogDebug("Lock request for object ID '{ObjectId}' could not be granted because one or more locks are not available: {UnavailableLocks}", lockObjectRequest.ObjectId, String.Join(", ", unavailableLocks.Select(ul => ul.ObjectId)));
+
+						// If one or more locks are not available, then none of the locks should be granted.
+						individualResponses.ForEach(ir => ir.LockIsGranted = false);
+					}
+
+					return lockObjectResponse;
+				}
+			}
 		}
 
 		/// <inheritdoc cref="ILockManager.UnlockAllObjects"/>
 		public virtual ICollection<string> UnlockAllObjects()
 		{
-			lock (lockedObjects)
+			using (activitySource.StartActivity())
 			{
-				var allUnlockedObjects = lockedObjects.Keys.ToList();
+				lock (lockedObjects)
+				{
+					var allUnlockedObjects = lockedObjects.Keys.ToList();
 
-				lockedObjects.Clear();
+					lockedObjects.Clear();
 
-				return allUnlockedObjects;
-			}		
+					return allUnlockedObjects;
+				}
+			}
 		}
 
 		/// <inheritdoc cref="ILockManager.UnlockObject(string, bool)"/>
 		public virtual ICollection<string> UnlockObject(string objectId, bool unlockLinkedObjects)
 		{
-			lock (lockedObjects)
+			using (activitySource.StartActivity())
 			{
-				var allUnlockedObjectIds = new List<string>();
-
-				if (unlockLinkedObjects && lockedObjects.TryGetValue(objectId, out var objectToUnlock))
+				lock (lockedObjects)
 				{
-					foreach (var linkedObjectId in objectToUnlock.LinkedObjectIds)
+					var allUnlockedObjectIds = new List<string>();
+
+					if (unlockLinkedObjects && lockedObjects.TryGetValue(objectId, out var objectToUnlock))
 					{
-						allUnlockedObjectIds.AddRange(UnlockObject(linkedObjectId, unlockLinkedObjects));
+						foreach (var linkedObjectId in objectToUnlock.LinkedObjectIds ?? Enumerable.Empty<string>())
+						{
+							allUnlockedObjectIds.AddRange(UnlockObject(linkedObjectId, unlockLinkedObjects));
+						}
 					}
-				}
 
-				if (lockedObjects.Remove(objectId))
-				{
-					allUnlockedObjectIds.Add(objectId);
-				}
+					if (lockedObjects.Remove(objectId))
+					{
+						logger.LogTrace($"Unlocked object {objectId}");
 
-				return allUnlockedObjectIds;
-			}		
+						allUnlockedObjectIds.Add(objectId);
+					}
+
+					return allUnlockedObjectIds;
+				}
+			}
 		}
 
 		private void SetAutoUnlockTimeSpan(LockObjectRequest request)
@@ -169,6 +195,8 @@
 			};
 
 			lockedObjects.Add(lockedObject.ObjectId, lockedObject);
+
+			logger.LogTrace($"Locked object {lockedObject.ObjectId}");
 		}
 	}
 }

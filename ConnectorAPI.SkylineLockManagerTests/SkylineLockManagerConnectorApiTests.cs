@@ -1,6 +1,8 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 {
 	using System.Threading.Tasks;
+	using Microsoft.Extensions.Logging;
+	using Microsoft.Extensions.Logging.Testing;
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
@@ -17,11 +19,12 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
 
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddFakeLogging());
 			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock, loggerFactory);
 
 			// Act
 			var lockObjectsRequests = new[]
@@ -29,7 +32,7 @@
 				new LockObjectRequest { ObjectId = "objectId" },
 				new LockObjectRequest { ObjectId = "objectId" } // Duplicate object ID
 			};
-			
+
 			// Assert
 			Assert.ThrowsException<ArgumentException>(() => lockManagerConnectorApi.LockObjects(lockObjectsRequests));
 		}
@@ -40,11 +43,12 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
 
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddFakeLogging());
 			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock, loggerFactory);
 
 			// Act
 
@@ -64,11 +68,13 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
 
+			var fakeLoggerProvider = new FakeLoggerProvider();
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(fakeLoggerProvider));
 			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock, loggerFactory);
 
 			// Act
 			var lockObjectRequest = new LockObjectRequest
@@ -89,11 +95,12 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
 
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddFakeLogging());
 			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock, loggerFactory);
 
 			// Act
 			var lockObjectRequest = new LockObjectRequest
@@ -114,11 +121,12 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
 
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddFakeLogging());
 			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock, loggerFactory);
 
 			// Act
 			var lockObjectRequest = new LockObjectRequest
@@ -139,11 +147,12 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock(new Dictionary<string, LockedObject> { { "objectId", new LockedObject { ObjectId = "objectId" } } });
 
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddFakeLogging());
 			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock, loggerFactory);
 
 			// Act
 			var lockObjectRequest = new LockObjectRequest
@@ -166,11 +175,12 @@
 
 			var lockManagerMock = new LockManagerMock(new Dictionary<string, LockedObject> { { objectId, new LockedObject { ObjectId = objectId, LinkedObjectIds = new List<string>() } } });
 
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddFakeLogging());
 			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock, loggerFactory);
 
 			// Act
 			var lockObjectRequest = new LockObjectRequest
@@ -201,25 +211,27 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
 
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddFakeLogging());
+
 			var higherPrioLockRequestListenerMockForContextA = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMockForContextA = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMockForContextA = new InterAppHandlerMock(lockManagerMock);
-			var lockManagerConnectorApiForContextA = new SkylineLockManagerConnectorApi(interappHandlerMockForContextA, unlockListenerMockForContextA, higherPrioLockRequestListenerMockForContextA);
+			var lockManagerConnectorApiForContextA = new SkylineLockManagerConnectorApi(interappHandlerMockForContextA, unlockListenerMockForContextA, higherPrioLockRequestListenerMockForContextA, loggerFactory);
 
 			var higherPrioLockRequestListenerMockForContextB = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMockForContextB = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMockForContextB = new InterAppHandlerMock(lockManagerMock);
-			var lockManagerConnectorApiForContextB = new SkylineLockManagerConnectorApi(interappHandlerMockForContextB, unlockListenerMockForContextB, higherPrioLockRequestListenerMockForContextB);
+			var lockManagerConnectorApiForContextB = new SkylineLockManagerConnectorApi(interappHandlerMockForContextB, unlockListenerMockForContextB, higherPrioLockRequestListenerMockForContextB, loggerFactory);
 
 			var higherPrioLockRequestListenerMockForContextC = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMockForContextC = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMockForContextC = new InterAppHandlerMock(lockManagerMock);
-			var lockManagerConnectorApiForContextC = new SkylineLockManagerConnectorApi(interappHandlerMockForContextC, unlockListenerMockForContextC, higherPrioLockRequestListenerMockForContextC);
+			var lockManagerConnectorApiForContextC = new SkylineLockManagerConnectorApi(interappHandlerMockForContextC, unlockListenerMockForContextC, higherPrioLockRequestListenerMockForContextC, loggerFactory);
 
 			var higherPrioLockRequestListenerMockForContextD = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMockForContextD = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMockForContextD = new InterAppHandlerMock(lockManagerMock);
-			var lockManagerConnectorApiForContextD = new SkylineLockManagerConnectorApi(interappHandlerMockForContextD, unlockListenerMockForContextD, higherPrioLockRequestListenerMockForContextD);
+			var lockManagerConnectorApiForContextD = new SkylineLockManagerConnectorApi(interappHandlerMockForContextD, unlockListenerMockForContextD, higherPrioLockRequestListenerMockForContextD, loggerFactory);
 
 			string objectId = "objectId";
 
@@ -278,11 +290,12 @@
 			// Arrange
 			var lockManagerMock = new LockManagerMock();
 
+			var loggerFactory = LoggerFactory.Create(builder => builder.AddFakeLogging());
 			var higherPrioLockRequestListenerMock = new HigherPrioLockRequestListenerMock(lockManagerMock);
 			var unlockListenerMock = new UnlockListenerMock(lockManagerMock);
 			var interappHandlerMock = new InterAppHandlerMock(lockManagerMock);
 
-			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock);
+			var lockManagerConnectorApi = new SkylineLockManagerConnectorApi(interappHandlerMock, unlockListenerMock, higherPrioLockRequestListenerMock, loggerFactory);
 
 			// Act
 			var lockLinkedObjectRequest = new LockObjectRequest

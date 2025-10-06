@@ -22,7 +22,7 @@
 		/// intended to uniquely identify the source within the context of the application.</remarks>
 		protected readonly string sourceId = Guid.NewGuid().ToString();
 
-		private readonly ILogger logger;
+		private readonly ILogger<Listener> logger;
 
 		/// <summary>
 		/// Indicates whether the object has been disposed.
@@ -39,9 +39,9 @@
 		/// Initializes a new instance of the <see cref="Listener"/> class with an optional logger.
 		/// </summary>
 		/// <param name="logger">An optional <see cref="ILogger"/> instance used for logging. If null, no logging will be performed.</param>
-		protected Listener(ILogger logger = null)
+		protected Listener(ILogger<Listener> logger)
 		{
-			this.logger = logger;
+			this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		}
 
 		/// <summary>

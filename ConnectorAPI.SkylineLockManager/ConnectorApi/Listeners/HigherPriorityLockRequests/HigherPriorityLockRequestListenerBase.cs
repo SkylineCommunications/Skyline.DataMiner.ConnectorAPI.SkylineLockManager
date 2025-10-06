@@ -28,7 +28,7 @@
 		/// </summary>
 		/// <param name="logger">An optional <see cref="ILogger"/> instance used for logging. If <see langword="null"/>, no logging will be
 		/// performed.</param>
-		protected HigherPriorityLockRequestListenerBase(ILogger logger = null) : base(logger)
+		protected HigherPriorityLockRequestListenerBase(ILogger<HigherPriorityLockRequestListenerBase> logger) : base(logger)
 		{
 
 		}

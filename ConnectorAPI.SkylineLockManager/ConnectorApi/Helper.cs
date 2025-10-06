@@ -13,13 +13,13 @@
 		private sealed class Helper
 		{
 			private readonly ConcurrentDictionary<LockObjectRequest, LockObjectResponse> mostRecentResponsePerRequest = new ConcurrentDictionary<LockObjectRequest, LockObjectResponse>();
-			private readonly SkylineLockManagerConnectorApi skylineLockManagerConnectorApi;
+			private readonly SkylineLockManagerConnectorApi api;
 			private readonly ICollection<LockObjectRequest> allLockObjectRequests;
 			private TimeSpan maxWaitingTime;
 
 			private Helper(SkylineLockManagerConnectorApi skylineLockManagerConnectorApi, ICollection<LockObjectRequest> lockObjectRequests, TimeSpan maxWaitingTime)
 			{
-				this.skylineLockManagerConnectorApi = skylineLockManagerConnectorApi ?? throw new ArgumentNullException(nameof(skylineLockManagerConnectorApi));
+				this.api = skylineLockManagerConnectorApi ?? throw new ArgumentNullException(nameof(skylineLockManagerConnectorApi));
 				this.allLockObjectRequests = lockObjectRequests ?? throw new ArgumentNullException(nameof(lockObjectRequests));
 				this.maxWaitingTime = maxWaitingTime;
 
@@ -29,9 +29,9 @@
 				}
 			}
 
-			public static List<LockObjectResponse> LockObjectsWithWait(SkylineLockManagerConnectorApi skylineLockManagerConnectorApi, ICollection<LockObjectRequest> lockObjectRequests, TimeSpan maxWaitingTime, out TimeSpan totalWaitingTime)
+			public static List<LockObjectResponse> LockObjectsWithWait(SkylineLockManagerConnectorApi api, ICollection<LockObjectRequest> lockObjectRequests, TimeSpan maxWaitingTime, out TimeSpan totalWaitingTime)
 			{
-				var helper = new Helper(skylineLockManagerConnectorApi, lockObjectRequests, maxWaitingTime);
+				var helper = new Helper(api, lockObjectRequests, maxWaitingTime);
 
 				if (lockObjectRequests.Count == 0)
 				{
@@ -57,12 +57,12 @@
 
 				var stopwatch = Stopwatch.StartNew();
 
-				if (!skylineLockManagerConnectorApi.unlockListener.IsListening)
+				if (!api.unlockListener.IsListening)
 				{
 					// Starting the listener can take some time (> 200 ms)
 					// In this timespan objects could have been unlocked, so we need to resend the requests after starting the listener.
 
-					skylineLockManagerConnectorApi.unlockListener.StartListening();
+					api.unlockListener.StartListening();
 
 					var notGrantedRequests = notGrantedRequestResponsePairs.Select(kvp => kvp.Key).ToList();
 
@@ -99,7 +99,7 @@
 
 						while (remainingWaitingTime > TimeSpan.Zero)
 						{
-							var tasksToWaitForObjectUnlocks = skylineLockManagerConnectorApi.unlockListener.StartListeningForUnlocks(notAvailableObjectIds);
+							var tasksToWaitForObjectUnlocks = api.unlockListener.StartListeningForUnlocks(notAvailableObjectIds);
 
 							stopwatchForUnlocks.Restart();
 
@@ -107,7 +107,7 @@
 
 							if (objectsGotUnlocked)
 							{
-								mostRecentResponsePerRequest[lockObjectRequest] = skylineLockManagerConnectorApi.SendLockObjectRequest(lockObjectRequest);
+								mostRecentResponsePerRequest[lockObjectRequest] = api.SendLockObjectRequest(lockObjectRequest);
 
 								if (mostRecentResponsePerRequest[lockObjectRequest].LockIsGranted)
 								{
@@ -142,14 +142,14 @@
 				stopwatch.Stop();
 				totalWaitingTime = stopwatch.Elapsed;
 
-				skylineLockManagerConnectorApi.unlockListener.StopListeningForUnlocks(allLockObjectRequests.SelectMany(req => req.Flatten()).Select(req => req.ObjectId).ToList());
+				api.unlockListener.StopListeningForUnlocks(allLockObjectRequests.SelectMany(req => req.Flatten()).Select(req => req.ObjectId).ToList());
 
 				return mostRecentResponsePerRequest.Select(kvp => kvp.Value).ToList();
 			}
 
 			private void SendLockObjectRequests(ICollection<LockObjectRequest> requests)
 			{
-				var lockObjectResponses = skylineLockManagerConnectorApi.SendLockObjectRequests(requests);
+				var lockObjectResponses = api.SendLockObjectRequests(requests);
 
 				foreach (var response in lockObjectResponses)
 				{
