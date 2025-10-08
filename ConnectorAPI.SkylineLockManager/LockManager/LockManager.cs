@@ -13,7 +13,7 @@
 	{
 		private static readonly ActivitySource activitySource = new ActivitySource("Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager");
 
-		private readonly ILogger<LockManager> logger;
+		private ILogger<LockManager> logger;
 
 		/// <summary>
 		/// Represents a collection of objects that are locked, keyed by their unique identifiers.
@@ -33,6 +33,15 @@
 		{
 			this.lockedObjects = lockedObjects ?? new Dictionary<string, LockedObject>();
 			this.logger = logger ?? new NullLogger<LockManager>();
+		}
+
+		/// <summary>
+		/// Gets or sets the logger.
+		/// </summary>
+		public ILogger<LockManager> Logger
+		{
+			get => logger;
+			set => this.logger = value ?? new NullLogger<LockManager>();
 		}
 
 		/// <inheritdoc cref="ILockManager.DefaultAutoLockReleaseTimeSpan"/>
