@@ -35,17 +35,25 @@
 			this.logger = logger ?? new NullLogger<LockManager>();
 		}
 
-		/// <summary>
-		/// Gets or sets the logger.
-		/// </summary>
-		public ILogger<LockManager> Logger
-		{
-			get => logger;
-			set => this.logger = value ?? new NullLogger<LockManager>();
-		}
-
 		/// <inheritdoc cref="ILockManager.DefaultAutoLockReleaseTimeSpan"/>
 		public TimeSpan DefaultAutoLockReleaseTimeSpan { get; protected set; } = TimeSpan.FromHours(1);
+
+		/// <inheritdoc cref="ILockManager.SetLogger(ILogger)"/>
+		public void SetLogger(ILogger logger)
+		{
+			if (logger == null)
+			{
+				this.logger = new NullLogger<LockManager>();
+			}
+			else if(logger is ILogger<LockManager> typedLogger)
+			{
+				this.logger = typedLogger;
+			}
+			else
+			{
+				throw new ArgumentException("Logger must be of type ILogger<LockManager>.", nameof(logger));
+			}
+		}
 
 		/// <inheritdoc cref="ILockManager.UnlockExpiredObjects"/>
 		public void UnlockExpiredObjects()

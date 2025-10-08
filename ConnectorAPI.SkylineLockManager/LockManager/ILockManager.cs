@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using DataMinerMessageBroker.API.Logging;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
 
 	/// <summary>
@@ -13,6 +14,11 @@
 		/// Gets the default time span after which an automatically acquired lock is released.
 		/// </summary>
 		TimeSpan DefaultAutoLockReleaseTimeSpan { get; }
+
+		/// <summary>
+		/// Sets the logger to be used by the lock manager.
+		/// </summary>
+		void SetLogger(Microsoft.Extensions.Logging.ILogger logger);
 
 		/// <summary>
 		/// Requests a lock on the specified object.
