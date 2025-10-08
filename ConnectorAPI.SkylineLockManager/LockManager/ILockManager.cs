@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using DataMinerMessageBroker.API.Logging;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
 
 	/// <summary>
