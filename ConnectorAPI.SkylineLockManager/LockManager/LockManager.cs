@@ -45,7 +45,7 @@
 
 			var objectIdsToUnlock = lockedObjects.Where(lo => lo.Value.AutoUnlockTimestamp < now).Select(lo => lo.Key).ToList();
 
-			logger.LogInformation("Unlocking {Count} expired locks: {ObjectIds}", objectIdsToUnlock.Count, String.Join(", ", objectIdsToUnlock));
+			logger.Log(objectIdsToUnlock.Count > 0 ? LogLevel.Warning : LogLevel.Debug, "Unlocking {Count} expired locks: {ObjectIds}", objectIdsToUnlock.Count, String.Join(", ", objectIdsToUnlock));
 
 			foreach (var objectIdToUnlock in objectIdsToUnlock)
 			{
