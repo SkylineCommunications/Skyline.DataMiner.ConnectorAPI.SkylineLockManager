@@ -122,7 +122,7 @@
 
 					if (lockedObjects.Remove(objectId))
 					{
-						logger.LogTrace($"Unlocked object {objectId}");
+						logger.LogTrace(LogEvents.Unlocked, $"Unlocked object {objectId}");
 
 						allUnlockedObjectIds.Add(objectId);
 					}
@@ -196,7 +196,7 @@
 
 			lockedObjects.Add(lockedObject.ObjectId, lockedObject);
 
-			logger.LogTrace($"Locked object {lockedObject.ObjectId}");
+			logger.LogTrace(LogEvents.Locked, $"Locked object {lockedObject.ObjectId}");
 		}
 	}
 }
