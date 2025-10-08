@@ -13,7 +13,7 @@
 	{
 		private static readonly ActivitySource activitySource = new ActivitySource("Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager");
 
-		private ILogger<LockManager> logger;
+		private ILogger logger;
 
 		/// <summary>
 		/// Represents a collection of objects that are locked, keyed by their unique identifiers.
@@ -41,18 +41,7 @@
 		/// <inheritdoc cref="ILockManager.SetLogger(ILogger)"/>
 		public void SetLogger(ILogger logger)
 		{
-			if (logger == null)
-			{
-				this.logger = new NullLogger<LockManager>();
-			}
-			else if(logger is ILogger<LockManager> typedLogger)
-			{
-				this.logger = typedLogger;
-			}
-			else
-			{
-				throw new ArgumentException("Logger must be of type ILogger<LockManager>.", nameof(logger));
-			}
+			this.logger = logger ?? new NullLogger<LockManager>();
 		}
 
 		/// <inheritdoc cref="ILockManager.UnlockExpiredObjects"/>
