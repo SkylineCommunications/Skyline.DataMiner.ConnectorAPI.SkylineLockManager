@@ -6,7 +6,7 @@
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Threading.Tasks;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
 
 	public partial class SkylineLockManagerConnectorApi
 	{

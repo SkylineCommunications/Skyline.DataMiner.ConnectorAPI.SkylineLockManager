@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking
+﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking
 {
 	using System.Collections.Generic;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
@@ -6,7 +6,7 @@
 	/// <summary>
 	/// InterApp message that is sent to the Lock Manager element when requesting a lock.
 	/// </summary>
-	public class LockObjectsRequestsMessage : Message
+	internal class LockObjectsRequestsMessage : Message
 	{
 		/// <summary>
 		/// Collection of items to be locked.

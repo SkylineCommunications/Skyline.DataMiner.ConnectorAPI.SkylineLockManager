@@ -5,8 +5,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using Microsoft.Extensions.Logging;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
 
 	/// <summary>
 	/// Provides a base class for listeners that monitor and handle lock requests with higher priority.

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking
+﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking
 {
 	using System.Collections.Generic;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
@@ -6,7 +6,7 @@
 	/// <summary>
 	/// Represents an InterApp message serving as reply to <see cref="LockObjectsRequestsMessage"/>.
 	/// </summary>
-	public class LockObjectsResponsesMessage : Message
+	internal class LockObjectsResponsesMessage : Message
 	{
 		/// <summary>
 		/// Gets or sets a collection of responses to individual <see cref="LockObjectRequest"/>.

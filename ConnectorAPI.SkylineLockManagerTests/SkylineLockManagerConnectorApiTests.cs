@@ -5,8 +5,8 @@
 	using Microsoft.Extensions.Logging.Testing;
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Unlocking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Unlocking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup;
 

@@ -10,7 +10,7 @@
 	/// than a specified threshold. It is designed for scenarios where priority-based lock contention needs to be managed.
 	/// Implementers of this interface should ensure proper resource cleanup by calling <see cref="IDisposable.Dispose"/>
 	/// when the listener is no longer needed.</remarks>
-	public interface IHigherPriorityLockRequestListener : IDisposable
+	internal interface IHigherPriorityLockRequestListener : IDisposable
 	{
 		/// <summary>
 		/// Occurs when a higher-priority lock request is received.

@@ -1,20 +1,20 @@
-﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi
+﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Sending
 {
 	using System;
 	using System.Diagnostics;
 	using System.Linq;
 	using Microsoft.Extensions.Logging;
 	using Newtonsoft.Json;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Unlocking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Unlocking;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.Shared;
 	using Skyline.DataMiner.Net;
 
-	internal class InterAppHandler : IInterAppHandler
+	internal class InterAppSender : IInterAppSender
 	{
 		private static readonly int InterAppTimeout_ParameterId = 100;
 		private static readonly int InterAppReceive_ParameterId = 9000000;
@@ -25,7 +25,7 @@
 		private readonly ILogger logger;
 		private readonly Lazy<TimeSpan> timeout;
 
-		public InterAppHandler(IConnection connection, IDmsElement element, ILogger<InterAppHandler> logger)
+		public InterAppSender(IConnection connection, IDmsElement element, ILogger<InterAppSender> logger)
 		{
 			timeout = new Lazy<TimeSpan>(GetTimeout);
 			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -35,7 +35,7 @@
 
 		private TimeSpan Timeout => timeout.Value;
 
-		/// <inheritdoc cref="IInterAppHandler.SendLockObjectsRequestsMessage(LockObjectsRequestsMessage)"/>
+		/// <inheritdoc cref="IInterAppSender.SendLockObjectsRequestsMessage(LockObjectsRequestsMessage)"/>
 		public LockObjectsResponsesMessage SendLockObjectsRequestsMessage(LockObjectsRequestsMessage message)
 		{
 			if (message == null)
@@ -48,7 +48,7 @@
 			return response;
 		}
 
-		/// <inheritdoc cref="IInterAppHandler.SendUnlockObjectsRequestsMessage(UnlockObjectsRequestsMessage)"/>
+		/// <inheritdoc cref="IInterAppSender.SendUnlockObjectsRequestsMessage(UnlockObjectsRequestsMessage)"/>
 		public void SendUnlockObjectsRequestsMessage(UnlockObjectsRequestsMessage message)
 		{
 			if (message == null)
@@ -66,7 +66,7 @@
 
 			Log($"Sending message: {JsonConvert.SerializeObject(message)}");
 
-			commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, SkylineLockManagerConnectorApi.InterAppKnownTypes);
+			commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, InterAppKnownTypes.KnownTypes);
 		}
 
 		private T SendMessageWithResponse<T>(Message message) where T : Message
@@ -77,7 +77,7 @@
 
 			Log($"Sending message: {JsonConvert.SerializeObject(message)}");
 
-			var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, SkylineLockManagerConnectorApi.InterAppKnownTypes).First();
+			var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, InterAppKnownTypes.KnownTypes).First();
 
 			Log($"Received response: {JsonConvert.SerializeObject(response)}");
 

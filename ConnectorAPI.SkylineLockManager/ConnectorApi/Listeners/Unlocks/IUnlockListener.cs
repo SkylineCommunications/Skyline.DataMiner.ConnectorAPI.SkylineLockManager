@@ -6,7 +6,7 @@
 	/// <summary>
 	/// Represents an object responsible for listening for unlock events.
 	/// </summary>
-	public interface IUnlockListener : IListener
+	internal interface IUnlockListener : IListener
 	{
 		/// <summary>
 		/// Start listening for unlock events for a specific object ID.

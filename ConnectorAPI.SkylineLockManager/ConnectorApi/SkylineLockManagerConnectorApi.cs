@@ -6,13 +6,12 @@
 	using System.Linq;
 	using Microsoft.Extensions.Logging;
 	using Microsoft.Extensions.Logging.Abstractions;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Unlocking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Sending;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.HigherPriorityLockRequests;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Listeners.Unlocks;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Unlocking;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.Net;
 
 	/// <inheritdoc cref="ISkylineLockManagerConnectorApi"/>
@@ -22,7 +21,7 @@
 
 		private readonly ILogger<SkylineLockManagerConnectorApi> logger;
 
-		private readonly IInterAppHandler interAppHandler;
+		private readonly IInterAppSender interAppHandler;
 		private readonly IUnlockListener unlockListener;
 		private readonly IHigherPriorityLockRequestListener higherPrioLockRequestListener;
 
@@ -34,18 +33,6 @@
 		public static readonly string SkylineLockManager_ConnectorName = "Skyline Lock Manager";
 
 		/// <summary>
-		/// A collection containing all classes used in InterApp communication.
-		/// </summary>
-		public static IReadOnlyCollection<Type> InterAppKnownTypes { get; } = new List<Type>
-		{
-			typeof(IInterAppCall),
-			typeof(LockObjectsRequestsMessage),
-			typeof(LockObjectsResponsesMessage),
-			typeof(UnlockObjectsRequestsMessage),
-			typeof(FailureMessage),
-		};
-
-		/// <summary>
 		/// Initializes a new instance of the <see cref="SkylineLockManagerConnectorApi"/> class, providing the necessary
 		/// handlers and listeners for inter-application communication and lock management.
 		/// </summary>
@@ -55,7 +42,7 @@
 		/// <param name="higherPrioLockRequestListener">The listener that handles requests for higher-priority locks. This parameter cannot be <see langword="null"/>.</param>
 		/// <param name="loggerFactory">An optional logger factory.</param>
 		/// <exception cref="ArgumentNullException">Thrown if any of the parameters are <see langword="null"/>.</exception>
-		internal SkylineLockManagerConnectorApi(IInterAppHandler interAppHandler, IUnlockListener unlockListener, IHigherPriorityLockRequestListener higherPrioLockRequestListener, ILoggerFactory loggerFactory = null)
+		internal SkylineLockManagerConnectorApi(IInterAppSender interAppHandler, IUnlockListener unlockListener, IHigherPriorityLockRequestListener higherPrioLockRequestListener, ILoggerFactory loggerFactory = null)
 		{
 			loggerFactory = loggerFactory ?? new NullLoggerFactory();
 			this.logger = loggerFactory.CreateLogger<SkylineLockManagerConnectorApi>();
@@ -87,7 +74,7 @@
 			loggerFactory = loggerFactory ?? new NullLoggerFactory();
 			this.logger = loggerFactory.CreateLogger<SkylineLockManagerConnectorApi>();
 
-			interAppHandler = new InterAppHandler(connection, element, loggerFactory.CreateLogger<InterAppHandler>());
+			interAppHandler = new InterAppSender(connection, element, loggerFactory.CreateLogger<InterAppSender>());
 			unlockListener = new UnlockListener(element, loggerFactory.CreateLogger<UnlockListener>());
 			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element, loggerFactory.CreateLogger<HigherPriorityLockRequestListener>());
 		}
@@ -113,7 +100,7 @@
 			loggerFactory = loggerFactory ?? new NullLoggerFactory();
 			this.logger = loggerFactory.CreateLogger<SkylineLockManagerConnectorApi>();
 
-			interAppHandler = new InterAppHandler(connection, element, loggerFactory.CreateLogger<InterAppHandler>());
+			interAppHandler = new InterAppSender(connection, element, loggerFactory.CreateLogger<InterAppSender>());
 			unlockListener = new UnlockListener(element, loggerFactory.CreateLogger<UnlockListener>());
 			higherPrioLockRequestListener = new HigherPriorityLockRequestListener(element, loggerFactory.CreateLogger<HigherPriorityLockRequestListener>());
 		}
