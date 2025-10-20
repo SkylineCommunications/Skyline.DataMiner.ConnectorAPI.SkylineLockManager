@@ -4,7 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using Microsoft.VisualStudio.TestTools.UnitTesting;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
 
 	[TestClass]
 	public class LockObjectResponseTests

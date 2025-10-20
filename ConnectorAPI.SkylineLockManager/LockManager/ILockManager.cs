@@ -2,7 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
+	using Microsoft.Extensions.Logging;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
 
 	/// <summary>
 	/// Defines methods for managing lock objects within the Skyline Lock Manager.
@@ -17,7 +18,7 @@
 		/// <summary>
 		/// Sets the logger to be used by the lock manager.
 		/// </summary>
-		void SetLogger(Microsoft.Extensions.Logging.ILogger logger);
+		void SetLogger(ILogger logger);
 
 		/// <summary>
 		/// Requests a lock on the specified object.

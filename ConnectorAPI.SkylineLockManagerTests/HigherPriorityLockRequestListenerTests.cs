@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests
 {
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup;
 
 	[TestClass]

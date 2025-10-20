@@ -1,8 +1,9 @@
-﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking
+﻿namespace Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking
 {
 	using System;
 	using System.Collections.Generic;
 	using Newtonsoft.Json;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager;
 
 	/// <summary>
 	/// Represents a request to lock an object.

@@ -2,7 +2,7 @@
 {
 	using System;
 
-	public interface IListener : IDisposable
+	internal interface IListener : IDisposable
 	{
 		bool IsListening { get; }
 

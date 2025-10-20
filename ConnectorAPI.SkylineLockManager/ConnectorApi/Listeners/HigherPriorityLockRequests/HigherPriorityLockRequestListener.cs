@@ -2,12 +2,12 @@
 {
 	using System;
 	using Microsoft.Extensions.Logging;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
 
 	/// <inheritdoc cref="IHigherPriorityLockRequestListener"/>
-	public class HigherPriorityLockRequestListener : HigherPriorityLockRequestListenerBase, IHigherPriorityLockRequestListener
+	internal class HigherPriorityLockRequestListener : HigherPriorityLockRequestListenerBase, IHigherPriorityLockRequestListener
 	{
 		private static readonly int HigherPrioLockRequests_ParameterId = 201;
 

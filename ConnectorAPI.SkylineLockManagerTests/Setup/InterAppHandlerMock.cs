@@ -2,12 +2,12 @@
 {
 	using System;
 	using System.Linq;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Unlocking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Unlocking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Sending;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.LockManager;
 
-	internal class InterAppHandlerMock : IInterAppHandler
+	internal class InterAppHandlerMock : IInterAppSender
 	{
 		private readonly ILockManager lockManager;
 

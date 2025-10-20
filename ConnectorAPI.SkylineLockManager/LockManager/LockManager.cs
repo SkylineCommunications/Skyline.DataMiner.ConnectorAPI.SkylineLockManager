@@ -6,7 +6,7 @@
 	using System.Linq;
 	using Microsoft.Extensions.Logging;
 	using Microsoft.Extensions.Logging.Abstractions;
-	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.Messages.Locking;
+	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
 
 	/// <inheritdoc cref="ILockManager"/>
 	public partial class LockManager : ILockManager
