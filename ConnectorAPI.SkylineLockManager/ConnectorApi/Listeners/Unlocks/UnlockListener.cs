@@ -3,6 +3,7 @@
 	using System;
 	using Microsoft.Extensions.Logging;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common.Subscription.Monitors;
 
 	/// <inheritdoc cref="IUnlockListener"/>
 	internal class UnlockListener : UnlockListenerBase, IUnlockListener
@@ -30,12 +31,14 @@
 		/// <inheritdoc/>
 		protected override void StartMonitor()
 		{
-			parameter.StartValueMonitor(sourceId, (paramValueChange) =>
+			Action<ParamValueChange<string>> monitorAction = (ParamValueChange<string> paramValueChange) =>
 			{
 				var unlockedObjectIds = paramValueChange.Value.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
 				ReportUnlockedObjects(unlockedObjectIds);
-			});
+			};
+
+			parameter.StartValueMonitor(sourceId, monitorAction);
 
 			Log($"Started monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
 		}
