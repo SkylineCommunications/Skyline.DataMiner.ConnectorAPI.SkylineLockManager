@@ -4,6 +4,7 @@
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup;
 
 	[TestClass]
+	[DoNotParallelize]
 	public class HigherPriorityLockRequestListenerTests
 	{
 		[TestMethod()]

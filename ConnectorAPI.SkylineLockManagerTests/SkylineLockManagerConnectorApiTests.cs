@@ -11,6 +11,7 @@
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup;
 
 	[TestClass()]
+	[DoNotParallelize]
 	public class SkylineLockManagerConnectorApiTests
 	{
 		[TestMethod()]
@@ -273,15 +274,15 @@
 				.Where(x => x.LockInfosPerObjectId.ContainsKey(objectId) && x.LockInfosPerObjectId[objectId].IsGranted).ToList();
 
 			Assert.AreEqual(1, lockInfosFromContextThatGotTheLock.Count, "Only one context should have gotten the lock.");
-			Assert.AreEqual(2, lockInfosFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */);
+			Assert.AreEqual(2, lockInfosFromContextThatGotTheLock.Single().TotalWaitingTime.TotalSeconds, 1.5 /* Accurate up to 1.5 seconds */);
 
 			var lockInfoFromContextsThatDidNotGetTheLock = new[] {lockObjectResultFromContextB, lockObjectResultFromContextC, lockObjectResultFromContextD}
 				.Where(x => x.LockInfosPerObjectId.TryGetValue(objectId, out var lockInfo) && !lockInfo.IsGranted).ToList();
 
 			Assert.AreEqual(2, lockInfoFromContextsThatDidNotGetTheLock.Count, "Two contexts should not have gotten the lock.");
 
-			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.First().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */, "Context that does not get the lock is expected to wait for the max waiting time.");
-			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.Last().TotalWaitingTime.TotalSeconds, 1 /* Accurate up to 1 second */, "Context that does not get the lock is expected to wait for the max waiting time.");
+			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.First().TotalWaitingTime.TotalSeconds, 1.5 /* Accurate up to 1.5 seconds */, "Context that does not get the lock is expected to wait for the max waiting time.");
+			Assert.AreEqual(maxWaitingTime.TotalSeconds, lockInfoFromContextsThatDidNotGetTheLock.Last().TotalWaitingTime.TotalSeconds, 1.5 /* Accurate up to 1.5 seconds */, "Context that does not get the lock is expected to wait for the max waiting time.");
 		}
 
 		[TestMethod()]

@@ -5,6 +5,7 @@
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManagerTests.Setup;
 
 	[TestClass]
+	[DoNotParallelize]
 	public class UnlockListenerTests
 	{
 		[TestMethod]
