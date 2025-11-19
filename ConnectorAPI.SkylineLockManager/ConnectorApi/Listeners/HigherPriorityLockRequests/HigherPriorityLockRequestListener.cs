@@ -34,14 +34,23 @@
 		/// <inheritdoc/>
 		protected override void StartMonitor()
 		{
+			Log($"ParamValueChange type: {typeof(ParamValueChange<string>).AssemblyQualifiedName}");
+			Log($"Action<ParamValueChange> type: {typeof(Action<ParamValueChange<string>>).AssemblyQualifiedName}");
+
 			Action<ParamValueChange<string>> monitorAction = (ParamValueChange<string> change) =>
 			{
+				Log($"ParamValueChange argument type: {change.GetType().AssemblyQualifiedName}");
+
 				string serializedLockObjectRequest = change.Value;
 
 				var lockObjectRequest = SecureNewtonsoftDeserialization.DeserializeObject<LockObjectRequest>(serializedLockObjectRequest) ?? throw new InvalidOperationException($"{serializedLockObjectRequest} could not be deserialized to a {nameof(LockObjectRequest)}.");
 
 				ReportHigherPrioLockObjectRequest(lockObjectRequest);
 			};
+
+			Log($"monitorAction variable type: {monitorAction.GetType().AssemblyQualifiedName}");
+
+			Log($"IDmsParameter type: {parameter.GetType().AssemblyQualifiedName}");
 
 			parameter.StartValueMonitor(sourceId, monitorAction);
 
