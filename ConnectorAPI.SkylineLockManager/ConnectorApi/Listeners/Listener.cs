@@ -67,11 +67,11 @@
 
 			startingListen = true;
 
-			Log("Starting monitor...", LogLevel.Debug);
+			Log("Starting monitor...");
 
 			StartMonitor();
 
-			Log("Started monitor", LogLevel.Debug);
+			Log("Started monitor");
 
 			IsListening = true;
 			startingListen = false;
@@ -139,11 +139,6 @@
 		/// <param name="logLevel">The severity level of the log entry.</param>
 		protected void Log(string message, LogLevel logLevel = LogLevel.Debug)
 		{
-			if (logger == null)
-			{
-				return;
-			}
-
 			string nameOfMethod = new StackTrace().GetFrame(1).GetMethod().Name;
 
 			lock (logger)

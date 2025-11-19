@@ -31,21 +31,12 @@
 		/// <inheritdoc/>
 		protected override void StartMonitor()
 		{
-			Log($"ParamValueChange type: {typeof(ParamValueChange<string>).AssemblyQualifiedName}");
-			Log($"Action<ParamValueChange> type: {typeof(Action<ParamValueChange<string>>).AssemblyQualifiedName}");
-
 			Action<ParamValueChange<string>> monitorAction = (ParamValueChange<string> paramValueChange) =>
 			{
-				Log($"ParamValueChange argument type: {paramValueChange.GetType().AssemblyQualifiedName}");
-
 				var unlockedObjectIds = paramValueChange.Value.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
 				ReportUnlockedObjects(unlockedObjectIds);
 			};
-
-			Log($"monitorAction variable type: {monitorAction.GetType().AssemblyQualifiedName}");
-
-			Log($"IDmsParameter type: {parameter.GetType().AssemblyQualifiedName}");
 
 			parameter.StartValueMonitor(sourceId, monitorAction);
 
