@@ -4,6 +4,7 @@
 	using Microsoft.Extensions.Logging;
 	using Skyline.DataMiner.ConnectorAPI.SkylineLockManager.ConnectorApi.InterApp.Messages.Locking;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common.Subscription.Monitors;
 	using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
 
 	/// <inheritdoc cref="IHigherPriorityLockRequestListener"/>
@@ -33,7 +34,7 @@
 		/// <inheritdoc/>
 		protected override void StartMonitor()
 		{
-			parameter.StartValueMonitor(sourceId, (change) =>
+			parameter.StartValueMonitor(sourceId, (ParamValueChange<string> change) =>
 			{
 				string serializedLockObjectRequest = change.Value;
 
