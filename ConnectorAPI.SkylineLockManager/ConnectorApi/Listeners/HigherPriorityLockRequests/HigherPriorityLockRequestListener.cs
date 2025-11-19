@@ -34,14 +34,16 @@
 		/// <inheritdoc/>
 		protected override void StartMonitor()
 		{
-			parameter.StartValueMonitor(sourceId, (ParamValueChange<string> change) =>
+			Action<ParamValueChange<string>> monitorAction = (ParamValueChange<string> change) =>
 			{
 				string serializedLockObjectRequest = change.Value;
 
 				var lockObjectRequest = SecureNewtonsoftDeserialization.DeserializeObject<LockObjectRequest>(serializedLockObjectRequest) ?? throw new InvalidOperationException($"{serializedLockObjectRequest} could not be deserialized to a {nameof(LockObjectRequest)}.");
 
 				ReportHigherPrioLockObjectRequest(lockObjectRequest);
-			});
+			};
+
+			parameter.StartValueMonitor(sourceId, monitorAction);
 
 			Log($"Started monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
 		}

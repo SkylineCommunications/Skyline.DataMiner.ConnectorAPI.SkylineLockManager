@@ -31,12 +31,14 @@
 		/// <inheritdoc/>
 		protected override void StartMonitor()
 		{
-			parameter.StartValueMonitor(sourceId, (ParamValueChange<string> paramValueChange) =>
+			Action<ParamValueChange<string>> monitorAction = (ParamValueChange<string> paramValueChange) =>
 			{
 				var unlockedObjectIds = paramValueChange.Value.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
 				ReportUnlockedObjects(unlockedObjectIds);
-			});
+			};
+
+			parameter.StartValueMonitor(sourceId, monitorAction);
 
 			Log($"Started monitor for Skyline Lock Manager element '{parameter.Element.Name}' parameter {parameter.Id}");
 		}
