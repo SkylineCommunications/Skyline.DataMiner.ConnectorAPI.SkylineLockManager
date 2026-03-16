@@ -331,7 +331,7 @@
 				Requests = requestsList,
 			};
 
-			logger.LogInformation(LogEvents.LockRequest, "Requesting locks for {ObjectIds}", String.Join(", ", requestsList.Select(r => r.ObjectId)).ToList());
+			logger.LogInformation(LogEvents.LockRequest, "Requesting locks for {ObjectIds}", String.Join(", ", requestsList.Select(r => r.ObjectId).ToArray()));
 
 			var responseMessage = interAppHandler.SendLockObjectsRequestsMessage(lockObjectsRequestsMessage);
 
