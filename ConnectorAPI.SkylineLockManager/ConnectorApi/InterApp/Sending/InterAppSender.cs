@@ -61,23 +61,23 @@
 
 		private void SendMessageWithoutResponse(Message message)
 		{
-			var commands = InterAppCallFactory.CreateNew();
-			commands.Messages.Add(message);
+			var interAppCall = InterAppCallFactory.CreateNew();
+			interAppCall.Messages.Add(message);
 
-			Log($"Sending message: {JsonConvert.SerializeObject(message)}");
+			Log($"Sending InterApp call: {JsonConvert.SerializeObject(interAppCall)}");
 
-			commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, InterAppKnownTypes.KnownTypes);
+			interAppCall.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, InterAppKnownTypes.KnownTypes);
 		}
 
 		private T SendMessageWithResponse<T>(Message message) where T : Message
 		{
-			var commands = InterAppCallFactory.CreateNew();
-			commands.ReturnAddress = new ReturnAddress(element.AgentId, element.Id, InterAppResponse_ParameterId);
-			commands.Messages.Add(message);
+			var interAppCall = InterAppCallFactory.CreateNew();
+			interAppCall.ReturnAddress = new ReturnAddress(element.AgentId, element.Id, InterAppResponse_ParameterId);
+			interAppCall.Messages.Add(message);
 
-			Log($"Sending message: {JsonConvert.SerializeObject(message)}");
+			Log($"Sending InterApp call: {JsonConvert.SerializeObject(interAppCall)}");
 
-			var response = commands.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, InterAppKnownTypes.KnownTypes).First();
+			var response = interAppCall.Send(connection, element.AgentId, element.Id, InterAppReceive_ParameterId, Timeout, InterAppKnownTypes.KnownTypes).First();
 
 			Log($"Received response: {JsonConvert.SerializeObject(response)}");
 
