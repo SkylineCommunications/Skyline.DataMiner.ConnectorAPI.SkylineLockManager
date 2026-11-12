@@ -35,7 +35,7 @@
 			};
 
 			// Assert
-			Assert.ThrowsException<ArgumentException>(() => lockManagerConnectorApi.LockObjects(lockObjectsRequests));
+			Assert.ThrowsExactly<ArgumentException>(() => lockManagerConnectorApi.LockObjects(lockObjectsRequests));
 		}
 
 		[TestMethod]
